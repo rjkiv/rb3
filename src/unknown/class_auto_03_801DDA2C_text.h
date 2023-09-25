@@ -1,6 +1,6 @@
 
 
-class Unknown {
+class Unknown_801F7AC0 {
     public:
         int unk00, unk04, unk08, unk0c;
         int unk10, unk14, unk18, unk1c;
