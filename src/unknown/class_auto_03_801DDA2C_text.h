@@ -25,4 +25,7 @@ class Unknown {
 
         void fn_801F7BA8(int,int*,int,int);     // https://decomp.me/scratch/CXXUs - INCOMPLETE!!!
 
+        void fn_801F728C();
+        int fn_801F7020();
+
 };
