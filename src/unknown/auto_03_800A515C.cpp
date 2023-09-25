@@ -1,20 +1,23 @@
 // ------------------------------------
-// class layout
+// class layouts
 // ------------------------------------
 namespace Quazal {
     class ProductSpecifics {
         public:
-            ProductSpecifics(); // aka fn_800A515C
-            virtual ~ProductSpecifics(); // aka fn_800A516C
-            virtual void unk() = 0; // 0'd in vtable, pure virtual
+            ProductSpecifics();             // aka fn_800A515C
+            virtual ~ProductSpecifics();    // aka fn_800A516C
+            virtual void unk() = 0;         // 0'd in vtable, pure virtual
             virtual void fn_8076F540();
-            // virtual void fn_8076F540(); // wait, why is this duplicated?
+            // virtual void fn_8076F540();  // wait, why is this duplicated?
     };
 
     class NetZSpecifics : ProductSpecifics {
         public:
-            NetZSpecifics(); // aka fn_800A5278
-            ~NetZSpecifics(); // aka fn_800A52B4
+            NetZSpecifics();                // aka fn_800A5278
+            virtual ~NetZSpecifics();       // aka fn_800A52B4
+            virtual int fn_800A530C();
+            virtual void fn_800A5314();
+            virtual void fn_800A5338();
     };
 }
 
@@ -46,8 +49,10 @@ Quazal::ProductSpecifics::~ProductSpecifics() {}
 //     temp_r3 = fn_800179A8(4, &lbl_8082A650[0], 0x15);
 //     var_r4 = temp_r3;
 //     if (temp_r3 != 0) {
-//         var_r4 = fn_800A5278();
+//         var_r4 = fn_800A5278(); // NetZ ctor
 //     }
+
+//     // looks like another ctor
 //     fn_800A49A0(arg0, var_r4);
 //     *arg0 = &lbl_8082A608[0];
 //     return arg0;
@@ -66,7 +71,7 @@ Quazal::ProductSpecifics::~ProductSpecifics() {}
 //         *arg0 = &lbl_8082A608[0];
 //         fn_800A4C84(0, &lbl_8082A608[0]);
 //         if (arg1 > 0) {
-//             fn_80017A8C();
+//             fn_80017A8C(); // operator delete
 //         }
 //     }
 //     return arg0;
@@ -86,37 +91,34 @@ Quazal::NetZSpecifics::~NetZSpecifics() {}
 // // fn_800A530C
 // // ------------------------------------
 
-// extern "C" int fn_800A530C();
-// int fn_800A530C() {
-//     return 1;
-// }
+int Quazal::NetZSpecifics::fn_800A530C() {
+    return 1;
+}
 
-// // ------------------------------------
-// // fn_800A5314
-// // ------------------------------------
+// ------------------------------------
+// fn_800A5314
+// ------------------------------------
 
-// extern "C" void fn_8007DFD0();
-// extern "C" void fn_80083734();
-// extern "C" void fn_800A5314();
+extern "C" void fn_8007DFD0();
+extern "C" void fn_80083734();
 
-// void fn_800A5314(void) {
-//     fn_80083734();
-//     fn_8007DFD0();
-// }
+void Quazal::NetZSpecifics::fn_800A5314(void) {
+    fn_80083734();
+    fn_8007DFD0();
+}
 
-// // ------------------------------------
-// // fn_800A5338
-// // ------------------------------------
+// ------------------------------------
+// fn_800A5338
+// ------------------------------------
 
-// extern "C" void fn_8007E3C0();                                    /* extern */
-// extern "C" void fn_80083174();                                    /* extern */
-// extern "C" void fn_80084160();                                    /* extern */
-// extern char lbl_808E2DA0;
-// extern "C" void fn_800A5338();
+extern "C" void fn_8007E3C0();
+extern "C" void fn_80083174();
+extern "C" void fn_80084160();
+extern char lbl_808E2DA0;
 
-// void fn_800A5338(void) {
-//     fn_80083174();
-//     lbl_808E2DA0 = 0;
-//     fn_8007E3C0();
-//     fn_80084160();
-// }
+void Quazal::NetZSpecifics::fn_800A5338(void) {
+    fn_80083174();
+    lbl_808E2DA0 = 0;
+    fn_8007E3C0();
+    fn_80084160();
+}
