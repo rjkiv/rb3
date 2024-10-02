@@ -254,9 +254,9 @@ DataNode PanelDir::GetFocusableComponentList(){
     std::vector<UIComponent*>::iterator it = components.begin();
     int i = 0;
     for(; it != components.end(); ++it, i++){
-        ptr.Node(i) = DataNode(*it);
+        ptr.Node(i) = *it;
     }
-    return DataNode(ptr);
+    return ptr;
 }
 
 UIComponent* PanelDir::GetFirstFocusableComponent(){
@@ -338,10 +338,10 @@ DataNode PanelDir::OnMsg(const ButtonDownMsg& msg){
     }
     if(node.Type() == kDataUnhandled){
         if(PanelNav(msg.GetAction(), msg.GetButton(), JoypadControllerTypePadNum(msg.GetPadNum()))){
-            return DataNode(0);
+            return 0;
         }
     }
-    return DataNode(node);
+    return node;
 }
 
 DataNode PanelDir::OnEnableComponent(const DataArray* da){
@@ -353,7 +353,7 @@ DataNode PanelDir::OnEnableComponent(const DataArray* da){
         EnableComponent(c, (RequestFocus)0);
     }
     else MILO_WARN("wrong number of args to PanelDir enable");
-    return DataNode(0);
+    return 0;
 }
 
 DataNode PanelDir::OnDisableComponent(const DataArray* da){
@@ -365,7 +365,7 @@ DataNode PanelDir::OnDisableComponent(const DataArray* da){
         DisableComponent(c, kAction_None);
     }
     else MILO_WARN("wrong number of args to PanelDir disable");
-    return DataNode(0);
+    return 0;
 }
 
 // stubbed out in retail
@@ -407,7 +407,7 @@ void PanelDir::SyncEditModePanels(){
 bool PanelDir::PropSyncEditModePanels(std::vector<FilePath>& panels, DataNode& val, DataArray* prop, int i, PropOp op){
     if(op == kPropSize){
         MILO_ASSERT(i == prop->Size(), 0x29F);
-        val = DataNode((int)panels.size());
+        val = (int)panels.size();
         return true;
     }
     else {
@@ -415,7 +415,7 @@ bool PanelDir::PropSyncEditModePanels(std::vector<FilePath>& panels, DataNode& v
         std::vector<FilePath>::iterator it = panels.begin() + prop->Int(i);
         switch(op){
             case kPropGet:
-                val = DataNode(*it);
+                val = *it;
                 break;
             case kPropSet:
                 (*it).SetRoot(val.Str(0));

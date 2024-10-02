@@ -625,7 +625,7 @@ void LightPreset::SetSpotlight(Spotlight* s, int data){
 DataNode LightPreset::OnSetKeyframe(DataArray* da){
     if(mHue){
         MILO_WARN("Can't set keyframe with hue translation");
-        return DataNode(0);
+        return 0;
     }
     else {
         int idx = da->Int(2);
@@ -638,7 +638,7 @@ DataNode LightPreset::OnSetKeyframe(DataArray* da){
 DataNode LightPreset::OnViewKeyframe(DataArray* da){
     ApplyState(mKeyframes[da->Int(2)]);
     Animate(1.0f);
-    return DataNode(0);
+    return 0;
 }
 
 LightPreset::Keyframe::Keyframe(Hmx::Object* o) : mSpotlightEntries(o), mVideoVenuePostProc(o, 0), mTriggers(o, kObjListNoNull), mDuration(0), mFadeOutTime(0), mFrame(-1.0f) {

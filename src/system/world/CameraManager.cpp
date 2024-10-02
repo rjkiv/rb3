@@ -53,8 +53,8 @@ bool CameraManager::ShotMatches(CamShot* shot, const std::vector<PropertyFilter>
         }
         else {
             Symbol sym = it->prop.Sym(0);
-            if(sym == flags_exact) d28 = DataNode(flags & it->mask);
-            else if(sym == flags_any) d28 = DataNode((flags & it->mask) != 0);
+            if(sym == flags_exact) d28 = flags & it->mask;
+            else if(sym == flags_any) d28 = (flags & it->mask) != 0;
             else d28 = shot->Property(sym, true)->Evaluate();
         }
 
@@ -81,7 +81,7 @@ CamShot* CameraManager::PickCameraShot(Symbol s, const std::vector<PropertyFilte
             it->prop.Print(str, false);
             str << " ";
             it->match.Print(str, false);
-            if(it->prop == DataNode(flags_any) || it->prop == DataNode(flags_exact)){
+            if(it->prop == flags_any || it->prop == flags_exact){
                 str << MakeString(" 0x%x", it->mask);
             } 
             str << ")";
@@ -120,8 +120,8 @@ int CameraManager::NumCameraShots(Symbol s, const std::vector<PropertyFilter>& f
 }
 
 void CameraManager::FirstShotOk(Symbol s){
-    static Message first_shot_ok("first_shot_ok", DataNode(""));
-    first_shot_ok[0] = DataNode(s);
+    static Message first_shot_ok("first_shot_ok", "");
+    first_shot_ok[0] = s;
     mParent->HandleType(first_shot_ok);
 }
 
@@ -141,7 +141,7 @@ Symbol CameraManager::MakeCategoryAndFilters(DataArray* da, std::vector<Property
             }
             if(b1){
                 filt.mask = currArr->Int(1);
-                filt.match = DataNode(currArr->Int(2));
+                filt.match = currArr->Int(2);
             }
             else {
                 b1 = false;
@@ -152,7 +152,7 @@ Symbol CameraManager::MakeCategoryAndFilters(DataArray* da, std::vector<Property
                 }
                 if(b1){
                     filt.mask = currArr->Int(1);
-                    filt.match = DataNode(1);
+                    filt.match = 1;
                 }
                 else {
                     filt.match = currArr->Evaluate(1);
@@ -169,21 +169,21 @@ DataNode CameraManager::OnPickCameraShot(DataArray* da){
     std::vector<PropertyFilter> pvec;
     pvec.reserve(20);
     Symbol sym = MakeCategoryAndFilters(da, pvec);
-    return DataNode(PickCameraShot(sym, pvec));
+    return PickCameraShot(sym, pvec);
 }
 
 DataNode CameraManager::OnFindCameraShot(DataArray* da){
     std::vector<PropertyFilter> pvec;
     pvec.reserve(20);
     Symbol sym = MakeCategoryAndFilters(da, pvec);
-    return DataNode(FindCameraShot(sym, pvec));
+    return FindCameraShot(sym, pvec);
 }
 
 DataNode CameraManager::OnNumCameraShots(DataArray* da){
     std::vector<PropertyFilter> pvec;
     pvec.reserve(20);
     Symbol sym = MakeCategoryAndFilters(da, pvec);
-    return DataNode(NumCameraShots(sym, pvec));
+    return NumCameraShots(sym, pvec);
 }
 
 void CameraManager::ForceCameraShot(CamShot* shot){
@@ -198,7 +198,7 @@ void CameraManager::StartShot_(CamShot* shot){
         mCamStartTime = TheTaskMgr.Time(shot->Units());
     }
     static DataNode& venue_test = DataVariable("venue_test");
-    if(venue_test != DataNode(1)){
+    if(venue_test != 1){
         TheWiiRnd.SetTriFrameRendering(true);
         gCooldown = 0;
     }
@@ -216,7 +216,7 @@ CamShot* CameraManager::ShotAfter(CamShot* cshot){
 DataNode CameraManager::OnCycleShot(DataArray* da){
     CamShot* after = ShotAfter(mCurrentShot);
     if(after) ForceCameraShot(after);
-    return DataNode(0);
+    return 0;
 }
 
 FreeCamera* CameraManager::GetFreeCam(int padnum){
@@ -275,7 +275,7 @@ void CameraManager::Poll(){
 
 DataNode CameraManager::Handle(DataArray* _msg, bool _warn){
     Symbol sym = _msg->Sym(1);
-#ifdef VERSION_SZBE69_B8
+#ifdef MILO_DEBUG
     MessageTimer timer((MessageTimer::Active()) ? dynamic_cast<Hmx::Object*>(this) : 0, sym);
 #endif
     HANDLE(pick_shot, OnPickCameraShot)
@@ -296,7 +296,7 @@ END_HANDLERS
 
 DataNode CameraManager::OnRandomSeed(DataArray* da){
     sSeed = da->Int(2);
-    return DataNode(0);
+    return 0;
 }
 
 DataNode CameraManager::OnIterateShot(DataArray* da){
@@ -304,12 +304,12 @@ DataNode CameraManager::OnIterateShot(DataArray* da){
     DataNode d28(*var);
     for(std::vector<Category, u32>::iterator it = mCameraShotCategories.begin(); it != mCameraShotCategories.end(); ++it){
         for(ObjPtrList<CamShot, ObjectDir>::iterator lit = it->unk4->begin(); lit != it->unk4->end(); ++lit){
-            *var = DataNode(*lit);
+            *var = *lit;
             for(int i = 3; i < da->Size(); i++){
                 da->Command(i)->Execute();
             }
         }
     }
     *var = d28;
-    return DataNode(0);
+    return 0;
 }

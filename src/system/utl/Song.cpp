@@ -20,12 +20,12 @@ Hmx::Object* Song::sCallback; // almost definitely some derivative of an Object,
 Song::Song() : mHxMaster(0), mHxSongData(0), mDebugParsers(this, kObjListNoNull), mSongEndFrame(0), mSpeed(1.0f), unk5c(0), unk60(0), unk7c(1) {
     SetName("Song", ObjectDir::Main());
     static DataNode& tool_song(DataVariable("tool_song"));
-    tool_song = DataNode(this);
+    tool_song = this;
 }
 
 Song::~Song(){
     static DataNode& tool_song(DataVariable("tool_song"));
-    tool_song = DataNode((Hmx::Object*)0);
+    tool_song = (Hmx::Object*)0;
     Unload();
 }
 
@@ -94,7 +94,7 @@ MeasureMap* Song::GetMeasureMap(){
 
 float Song::UpdateOverlay(RndOverlay* o, float f){
     for(ObjPtrList<Hmx::Object, ObjectDir>::iterator it = mDebugParsers.begin(); it != mDebugParsers.end(); ++it){
-        const DataNode& node = (*it)->Handle(Message("debug_draw", DataNode(f), DataNode(GetBeat())), true);
+        const DataNode& node = (*it)->Handle(Message("debug_draw", f, GetBeat()), true);
         f += node.Float(0);
     }
     return f;
@@ -183,10 +183,10 @@ void Song::OnText(int i, const char* cc, unsigned char uc){
 
 DataNode Song::OnMBTFromSeconds(const DataArray* da){
     MBT mbt = GetMBTFromFrame(da->Float(2), 0);
-    *da->Var(3) = DataNode(mbt.measure);
-    *da->Var(4) = DataNode(mbt.beat);
-    *da->Var(5) = DataNode(mbt.tick);
-    return DataNode(0);
+    *da->Var(3) = mbt.measure;
+    *da->Var(4) = mbt.beat;
+    *da->Var(5) = mbt.tick;
+    return 0;
 }
 
 void Song::JumpTo(Symbol s){
@@ -229,13 +229,13 @@ END_HANDLERS
 
 DataNode Song::GetBookmarks(){
     DataArrayPtr ptr(new DataArray(unk24.size() + 1));
-    ptr->Node(0) = DataNode("song_begin");
+    ptr->Node(0) = "song_begin";
     int idx = 1;
     for(std::map<int, Symbol>::iterator it = unk24.begin(); it != unk24.end(); ++it){
-        ptr->Node(idx) = DataNode(it->second);
+        ptr->Node(idx) = it->second;
         idx++;
     }  
-    return DataNode(ptr);
+    return ptr;
 }
 
 DataNode Song::GetMidiParsers(){
@@ -244,11 +244,11 @@ DataNode Song::GetMidiParsers(){
         for(std::list<MidiParser*>::iterator it = MidiParser::sParsers.begin(); it != MidiParser::sParsers.end(); ++it){
             String str((*it)->Name());
             if(str != "events_parser"){
-                ptr->Insert(ptr->Size(), DataNode(*it));
+                ptr->Insert(ptr->Size(), *it);
             }
         }
     }
-    return DataNode(ptr);
+    return ptr;
 }
 
 void Song::UpdateDebugParsers(){
@@ -273,7 +273,7 @@ void Song::SetLoopEnd(float f){
 // fn_8035FC14
 void Song::SetStateDirty(bool dirty){
     unk7c = dirty;
-    DataArrayPtr ptr(DataNode(Symbol(Name())));
+    DataArrayPtr ptr(Symbol(Name()));
 //   (**(code **)(*sCallback + 0x18))(sCallback,this,this_00); sCallback->SomeMethod(this, (DataArray*)ptr);
 }
 

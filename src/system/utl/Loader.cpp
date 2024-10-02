@@ -13,22 +13,22 @@ LoadMgr::LoadMgr() : mLoaders(), mPlatform(kPlatformWii), mEditMode(0), mCacheMo
 void LoadMgr::SetEditMode(bool b){
     mEditMode = b;
     static DataNode& edit_mode = DataVariable("edit_mode");
-    edit_mode = DataNode(mEditMode);
+    edit_mode = mEditMode;
 }
 
 static DataNode OnLoadMgrPrint(DataArray* da){
     TheLoadMgr.Print();
-    return DataNode(0);
+    return 0;
 }
 
 static DataNode OnSetLoadMgrDebug(DataArray* da){
     TheLoadMgr.mCacheMode = da->Int(1) != 0;
-    return DataNode(0);
+    return 0;
 }
 
 static DataNode OnSetEditMode(DataArray* da){
     TheLoadMgr.SetEditMode(da->Int(1));
-    return DataNode(0);
+    return 0;
 }
 
 static DataNode OnSetLoaderPeriod(DataArray* da){
@@ -36,11 +36,11 @@ static DataNode OnSetLoaderPeriod(DataArray* da){
     float ret = TheLoadMgr.unk18;
     TheLoadMgr.unk1c = theFloat;
     TheLoadMgr.unk18 = theFloat;
-    return DataNode(ret);
+    return ret;
 }
 
 static DataNode OnSysPlatformSym(DataArray* da){
-    return DataNode(PlatformSymbol(TheLoadMgr.GetPlatform()));
+    return PlatformSymbol(TheLoadMgr.GetPlatform());
 }
 
 void LoadMgr::Init(){
@@ -51,7 +51,7 @@ void LoadMgr::Init(){
     DataRegisterFunc("set_edit_mode", OnSetEditMode);
     DataRegisterFunc("set_loader_period", OnSetLoaderPeriod);
     DataRegisterFunc("sysplatform_sym", OnSysPlatformSym);
-    DataVariable("sysplatform") = DataNode((int)mPlatform);
+    DataVariable("sysplatform") = (int)mPlatform;
 }
 
 Loader* LoadMgr::ForceGetLoader(const FilePath& fp){

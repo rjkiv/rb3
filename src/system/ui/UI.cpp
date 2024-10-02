@@ -28,7 +28,7 @@ BEGIN_HANDLERS(Automator)
     HANDLE(cheat_invoked, OnCheatInvoked)
     {
         DataNode result = OnCustomMsg(Message(_msg));
-        if(result.Type() != kDataUnhandled) return DataNode(result);
+        if(result.Type() != kDataUnhandled) return result;
     }
     HANDLE_SUPERCLASS(Hmx::Object)
     HANDLE_CHECK(0x1B2)
@@ -160,7 +160,7 @@ BEGIN_HANDLERS(UIManager)
     if(transitioning){
         if(BlockHandlerDuringTransition(sym, _msg)) block = true;
     }
-    if(block) return DataNode(0);
+    if(block) return 0;
     HANDLE_MEMBER_PTR(mSink);
     HANDLE_ACTION(use_joypad, UseJoypad(_msg->Int(2), true))
     HANDLE_ACTION(set_virtual_dpad, mJoyClient->SetVirtualDpad(_msg->Int(2)))

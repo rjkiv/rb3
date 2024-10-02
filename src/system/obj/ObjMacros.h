@@ -37,7 +37,7 @@ const char* PathName(const class Hmx::Object*);
 
 // BEGIN HANDLE MACROS ---------------------------------------------------------------------------------
 
-#ifdef VERSION_SZBE69_B8
+#ifdef MILO_DEBUG
     #define BEGIN_HANDLERS(objType) \
     DataNode objType::Handle(DataArray* _msg, bool _warn){ \
         Symbol sym = _msg->Sym(1); \
@@ -285,7 +285,7 @@ void objType::Load(BinStream& bs){
         MILO_FAIL("%s can't load new %s alt version %d > %d", PathName(this), ClassName(), gAltRev, (unsigned short)ver); \
     }
 
-#ifdef VERSION_SZBE69_B8
+#ifdef MILO_DEBUG
     #define ASSERT_REVS(rev1, rev2) \
         ASSERT_REV(rev1) \
         ASSERT_ALTREV(rev2)

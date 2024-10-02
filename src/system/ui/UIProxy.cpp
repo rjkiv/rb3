@@ -166,7 +166,7 @@ DataNode UIProxy::OnSetProxyDir(DataArray* da){
         SetProxyDir(FilePath(da->Str(2)), da->Int(3));
     }
     else SetProxyDir(da->Obj<RndDir>(2));
-    return DataNode(1);
+    return 1;
 }
 
 BEGIN_HANDLERS(UIProxy)

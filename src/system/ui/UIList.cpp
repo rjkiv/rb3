@@ -561,7 +561,7 @@ DataNode UIList::OnMsg(const ButtonDownMsg& msg){
         bool b = false;
         if(sub){
             if(sub->Handle(msg, false) != DataNode(kDataUnhandled, 0)){
-                return DataNode(1);
+                return 1;
             }
             if(ScrollDirection(msg, cntType, sub->mListDir->Orientation() == kUIListVertical, sub->mListState.mGridSpan) == kAction_Confirm){
 
@@ -571,13 +571,13 @@ DataNode UIList::OnMsg(const ButtonDownMsg& msg){
     else {
         if(!mListState.IsScrolling()){
             if(msg.GetAction() == kAction_Confirm){
-                if(SelectScrollSelect(this, mUser)) return DataNode(1);
+                if(SelectScrollSelect(this, mUser)) return 1;
                 SendSelect(mUser);
-                return DataNode(1);
+                return 1;
             }
             if(msg.GetAction() == kAction_Cancel){
                 if(RevertScrollSelect(this, mUser, 0)){
-                    return DataNode(1);
+                    return 1;
                 }
             }
         }
@@ -631,7 +631,7 @@ DataNode UIList::OnSetData(DataArray* da){
     if(mDataProvider) mDataProvider->SetData(arr);
     else mDataProvider = new DataProvider(arr, i3, i4, i5, this);
     SetProvider(mDataProvider);
-    return DataNode(1);
+    return 1;
 }
 
 void UIList::SetScrollUser(LocalUser* user){
@@ -644,16 +644,16 @@ DataNode UIList::OnSetSelected(DataArray* da){
     if(node.Type() == kDataInt){
         if(da->Size() == 4) i6 = da->Int(3);
         SetSelected(node.Int(0), i6);
-        return DataNode(1);
+        return 1;
     }
     else if(node.Type() == kDataSymbol || node.Type() == kDataString){
         bool i3 = da->Size() == 4 ? da->Int(3) : true;
         if(da->Size() == 5) i6 = da->Int(4);
-        return DataNode(SetSelected(node.ForceSym(0), i3, i6));
+        return SetSelected(node.ForceSym(0), i3, i6);
     }
     else {
         MILO_FAIL("bad arg to set_selected");
-        return DataNode(0);
+        return 0;
     }
 }
 
@@ -661,15 +661,15 @@ DataNode UIList::OnSetSelectedSimulateScroll(DataArray* da){
     DataNode node = da->Evaluate(2);
     if(node.Type() == kDataInt){
         SetSelectedSimulateScroll(node.Int(0));
-        return DataNode(1);
+        return 1;
     }
     else if(node.Type() == kDataSymbol || node.Type() == kDataString){
         bool b3 = da->Size() == 4 ? da->Int(3) : true;
-        return DataNode(SetSelectedSimulateScroll(node.ForceSym(0), b3));
+        return SetSelectedSimulateScroll(node.ForceSym(0), b3);
     }
     else {
         MILO_FAIL("bad arg to set_selected_simulate_scroll");
-        return DataNode(0);
+        return 0;
     }
 }
 
@@ -677,14 +677,14 @@ DataNode UIList::OnScroll(DataArray* da){
     int scroll = da->Int(2);
     mUser = da->Size() > 3 ? da->Obj<LocalUser>(3) : 0;
     Scroll(scroll);
-    return DataNode(1);
+    return 1;
 }
 
 DataNode UIList::OnSelectedSym(DataArray* da){
     if(da->Size() > 2){
-        return DataNode(SelectedSym(da->Int(2)));
+        return SelectedSym(da->Int(2));
     }
-    else return DataNode(SelectedSym(true));
+    else return SelectedSym(true);
 }
 
 bool UIList::IsEmptyValue() const { return mListState.SelectedData() == -1; }

@@ -68,7 +68,7 @@ void WorldCrowd::CreateMeshes(){
 }
 
 DataNode WorldCrowd::OnRebuild(DataArray* da){
-    return DataNode(0);
+    return 0;
 }
 
 BEGIN_COPYS(WorldCrowd)

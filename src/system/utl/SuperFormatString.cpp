@@ -108,7 +108,7 @@ SuperFormatString::SuperFormatString(const char* cc, const DataArray* da, bool b
                             theArr = da->FindArray(phInfoPos, false);
                         }
                         if(theArr || isToken) {
-                            DataNode node((isToken) ? DataNode(0) : theArr->Evaluate(1));
+                            DataNode node((isToken) ? 0 : theArr->Evaluate(1));
                             bool node_bool = false;
                             switch(phType){
                                 case 0:

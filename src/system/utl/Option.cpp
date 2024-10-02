@@ -9,24 +9,24 @@
 static DataNode DataOptionStr(DataArray* arr){
     const char* str = OptionStr(arr->Str(1), 0);
     if(str){
-        *arr->Var(2) = DataNode(str);
-        return DataNode(1);
+        *arr->Var(2) = str;
+        return 1;
     }
-    else return DataNode(0);
+    else return 0;
 }
 
 static DataNode DataOptionSym(DataArray* arr){
     const char* str = OptionStr(arr->Str(1), 0);
     Symbol s(str);
-    if(s.Null()) return DataNode(0);
+    if(s.Null()) return 0;
     else {
-        *arr->Var(2) = DataNode(s);
-        return DataNode(1);
+        *arr->Var(2) = s;
+        return 1;
     }
 }
 
 static DataNode DataOptionBool(DataArray* arr){
-    return DataNode(OptionBool(arr->Str(1), false));
+    return OptionBool(arr->Str(1), false);
 }
 
 void OptionInit() {

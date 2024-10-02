@@ -146,14 +146,14 @@ void CamShot::CacheFrames(){
 }
 
 bool CamShot::ShotOk(CamShot* shot){
-    static Message msg("shot_ok", DataNode(0));
-    msg[0] = DataNode(shot);
+    static Message msg("shot_ok", 0);
+    msg[0] = shot;
     DataNode handled = HandleType(msg);
     switch(handled.Type()){
         case kDataUnhandled:
             break;
         case kDataString:
-            if(DataVariable("camera_spew") != DataNode(0)){
+            if(DataVariable("camera_spew") != 0){
                 MILO_LOG("Shot %s rejected: %s.\n", Name(), handled.Str(0));
             }
             return false;
@@ -162,7 +162,7 @@ bool CamShot::ShotOk(CamShot* shot){
                 break;
             }
             else {
-                if(DataVariable("camera_spew") != DataNode(0)){
+                if(DataVariable("camera_spew") != 0){
                     MILO_LOG("Shot %s rejected: not ok.\n", Name());
                 }
                 return false;
@@ -776,11 +776,11 @@ bool CamShotFrame::HasTargets() const {
 }
 
 DataNode CamShot::OnGetOccluded(DataArray* da){
-    return DataNode(0);
+    return 0;
 }
 
 DataNode CamShot::OnSetAllCrowdChars3D(DataArray* da){
-    return DataNode(0);
+    return 0;
 }
 
 CamShotCrowd::CamShotCrowd(Hmx::Object* o) : mCrowd(o, 0), mCrowdRotate(0), unk18(dynamic_cast<CamShot*>(o)) {}
@@ -852,33 +852,33 @@ BEGIN_HANDLERS(CamShot)
 END_HANDLERS
 
 DataNode CamShot::OnHasTargets(DataArray* da){
-    return DataNode(mKeyFrames[da->Int(2)].HasTargets());
+    return mKeyFrames[da->Int(2)].HasTargets();
 }
 
 DataNode CamShot::OnSetPos(DataArray* da){
     int idx = da->Int(2);
-    return DataNode(SetPos(mKeyFrames[idx], RndCam::Current()));
+    return SetPos(mKeyFrames[idx], RndCam::Current());
 }
 
 DataNode CamShot::OnClearCrowdChars(DataArray* da){
     int idx = da->Int(2);
     MILO_ASSERT(idx < mCrowds.size(), 0xC82);
     mCrowds[idx].ClearCrowdChars();
-    return DataNode(0);
+    return 0;
 }
 
 DataNode CamShot::OnAddCrowdChars(DataArray* da){
     int idx = da->Int(2);
     MILO_ASSERT(idx < mCrowds.size(), 0xC8A);
     mCrowds[idx].AddCrowdChars();
-    return DataNode(0);
+    return 0;
 }
 
 DataNode CamShot::OnSetCrowdChars(DataArray* da){
     int idx = da->Int(2);
     MILO_ASSERT(idx < mCrowds.size(), 0xC92);
     mCrowds[idx].SetCrowdChars();
-    return DataNode(0);
+    return 0;
 }
 
 DataNode CamShot::OnRadio(DataArray* da){
@@ -887,7 +887,7 @@ DataNode CamShot::OnRadio(DataArray* da){
     if(mFlags & i2){
         mFlags = mFlags & ~i3 | i2;
     }
-    return DataNode(0);
+    return 0;
 }
 
 BEGIN_CUSTOM_PROPSYNC(CamShotCrowd)

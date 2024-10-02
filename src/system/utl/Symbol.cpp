@@ -89,7 +89,7 @@ static DataNode PrintSymbolTable(DataArray* da){
             TheDebug << MakeString("%s\n", strvec[i]);
         }
     }
-    return DataNode(0);
+    return 0;
 }
 
 void Symbol::PreInit(int stringSize, int hashSize){

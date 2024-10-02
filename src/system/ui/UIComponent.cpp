@@ -146,7 +146,7 @@ void UIComponent::PostLoad(BinStream& bs) {
         ResourceFileUpdated(false);
         SetType("");
         mResource = 0;
-        DataVariable("uicomponent.resource_upgrade") = DataNode(1);
+        DataVariable("uicomponent.resource_upgrade") = 1;
     }
     if(mResourceName.length() != 0){
         mResourceDir.PostLoad(0);
@@ -179,8 +179,8 @@ void UIComponent::SendSelect(LocalUser* user){
     if(mState == kFocused){
         SetState(kSelecting);
         static UIComponentSelectMsg select_msg(0, 0);
-        select_msg[0] = DataNode(this);
-        select_msg[1] = DataNode(user);
+        select_msg[0] = this;
+        select_msg[1] = user;
         TheUI->Handle(select_msg, false);
         if(mState != kSelecting) unk_0xD4 = 0;
         else {
@@ -325,9 +325,9 @@ const char* UIComponent::GetResourcesPath(){
 
 DataNode UIComponent::OnGetResourcesPath(DataArray* da) {
     if(mResourcePath.length() != 0){
-        return DataNode(FileRelativePath(FileRoot(), mResourcePath.c_str()));
+        return FileRelativePath(FileRoot(), mResourcePath.c_str());
     }
-    else return DataNode("");
+    else return "";
 }
 
 #pragma push
@@ -336,8 +336,8 @@ void UIComponent::FinishSelecting(){
     if(mState != kDisabled && mState != kNormal) SetState(kFocused);
     if(!mMockSelect && unk_0xD4 == TheUI->mCurrentScreen){
         static UIComponentSelectDoneMsg select_msg(this, 0);
-        select_msg[0] = DataNode(this);
-        select_msg[1] = DataNode(mSelectingUser);
+        select_msg[0] = this;
+        select_msg[1] = mSelectingUser;
         TheUI->Handle(select_msg, false);
     }
     else mMockSelect = false;

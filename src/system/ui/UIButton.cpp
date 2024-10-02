@@ -46,7 +46,7 @@ END_HANDLERS
 DataNode UIButton::OnMsg(const ButtonDownMsg& msg) {
     if (msg.GetAction() == 1 && GetState() == UIComponent::kFocused) {
         SendSelect(msg.GetUser());
-        return DataNode(1);
+        return 1;
     }
     return DataNode(kDataUnhandled, 0);
 }

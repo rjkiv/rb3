@@ -147,19 +147,19 @@ DataNode UISlider::OnMsg(const ButtonDownMsg& msg){
                 UIComponentScrollMsg scroll_msg(this, msg.GetUser());
                 TheUI->Handle(scroll_msg, 0);
             }
-            return DataNode(1);
+            return 1;
         }
         if(CatchNavAction(msg.GetAction())){
-            return DataNode(1);
+            return 1;
         }
     }
     JoypadAction thisAct = msg.GetAction();
     LocalUser* user = msg.GetUser();
     if(thisAct == kAction_Confirm && SelectScrollSelect(this, user)){
-        return DataNode(1);
+        return 1;
     }
     else if(thisAct == kAction_Cancel && RevertScrollSelect(this, user, 0)){
-        return DataNode(1);
+        return 1;
     }
     return DataNode(kDataUnhandled, 0);
 }

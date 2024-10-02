@@ -38,30 +38,30 @@ BEGIN_MESSAGE(UIScreenChangeMsg, screen_change, UIScreen*, UIScreen*, bool);
 END_MESSAGE;
 
 inline UIComponentScrollMsg::UIComponentScrollMsg(UIComponent* comp, LocalUser* user) : 
-    Message(Type(), DataNode(comp), DataNode(user)){}
+    Message(Type(), comp, user){}
 
 inline UIComponentSelectMsg::UIComponentSelectMsg(UIComponent* comp, LocalUser* user) : 
-    Message(Type(), DataNode(comp), DataNode(user)){}
+    Message(Type(), comp, user){}
 
 inline UIComponentSelectDoneMsg::UIComponentSelectDoneMsg(UIComponent* comp, LocalUser* user) : 
-    Message(Type(), DataNode(comp), DataNode(user)){}
+    Message(Type(), comp, user){}
 
 inline UIComponentScrollSelectMsg::UIComponentScrollSelectMsg(UIComponent* comp, LocalUser* user, bool b) : 
-    Message(Type(), DataNode(comp), DataNode(user), DataNode(b)){}
+    Message(Type(), comp, user, b){}
 
 inline UIComponentFocusChangeMsg::UIComponentFocusChangeMsg(UIComponent* comp1, UIComponent* comp2, PanelDir* dir, Symbol s) : 
-    Message(Type(), DataNode(comp1), DataNode(comp2), DataNode(dir), DataNode(s)){}
+    Message(Type(), comp1, comp2, dir, s){}
 
 inline UITriggerCompleteMsg::UITriggerCompleteMsg(UITrigger* trig) : 
-    Message(Type(), DataNode(trig)){}
+    Message(Type(), trig){}
 
 inline UIComponentScrollStartMsg::UIComponentScrollStartMsg(UIComponent* comp, LocalUser* user) :
-    Message(Type(), DataNode(comp), DataNode(user)){}
+    Message(Type(), comp, user){}
 
 inline UITransitionCompleteMsg::UITransitionCompleteMsg(UIScreen* s1, UIScreen* s2) :
-    Message(Type(), DataNode(s1), DataNode(s2)){}
+    Message(Type(), s1, s2){}
 
 inline UIScreenChangeMsg::UIScreenChangeMsg(UIScreen* s1, UIScreen* s2, bool b) :
-    Message(Type(), DataNode(s1), DataNode(s2), DataNode(b)){}
+    Message(Type(), s1, s2, b){}
 
 #endif

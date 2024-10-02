@@ -221,5 +221,5 @@ DataNode GlitchFinder::OnGlitchFindLeaves(DataArray* arr){
 
 DataNode GlitchFinder::OnGlitchFindPoke(DataArray* arr){
     TheGlitchFinder.Poke(arr->Str(1), 0);
-    return DataNode(0);
+    return 0;
 }

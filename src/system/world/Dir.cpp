@@ -27,7 +27,7 @@ WorldDir::WorldDir() : mPresetOverrides(this), mBitmapOverrides(this), mMatOverr
 #pragma pool_data off
 void SetTheWorld(WorldDir* dir){
     static DataNode& world = DataVariable("world");
-    world = DataNode(dir);
+    world = dir;
     TheWorld = dir;
     if(dir) gLastWorld = dir;
 }
@@ -49,7 +49,7 @@ void WorldDir::Enter(){
     if(!TheWorld){
         SetTheWorld(this);
         static DataNode& n = DataVariable("world.last_entered");
-        n = DataNode(this);
+        n = this;
     }
     mPresetManager.Enter();
     mCameraManager.Enter();

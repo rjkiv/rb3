@@ -200,12 +200,12 @@ RndFont* UIFontImporter::FindFontForMat(RndMat* mat) const {
 
 DataNode UIFontImporter::OnAttachToImportFont(DataArray* da){
     AttachImporterToFont(mFontToImportFrom);
-    return DataNode(0);
+    return 0;
 }
 
 DataNode UIFontImporter::OnImportSettings(DataArray* da){
     ImportSettingsFromFont(mFontToImportFrom);
-    return DataNode(0);
+    return 0;
 }
 
 const char* UIFontImporter::GetResourcesPath(){
@@ -222,8 +222,8 @@ const char* UIFontImporter::GetResourcesPath(){
 
 DataNode UIFontImporter::OnGetResourcesPath(DataArray* da){
     const char* path = GetResourcesPath();
-    if(path) return DataNode(FileRelativePath(FileRoot(), path));
-    else return DataNode("");
+    if(path) return FileRelativePath(FileRoot(), path);
+    else return "";
 }
 
 DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray* da){
@@ -236,8 +236,8 @@ DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray* da){
             if(thetex) tex = thetex;
         }
     }
-    if(tex) return DataNode(tex->mFilepath.c_str());
-    else return DataNode("");
+    if(tex) return tex->mFilepath.c_str();
+    else return "";
 }
 
 DataNode UIFontImporter::OnSyncWithResourceFile(DataArray* da){
@@ -279,7 +279,7 @@ DataNode UIFontImporter::OnSyncWithResourceFile(DataArray* da){
             }
         }
     }
-    return DataNode(0);
+    return 0;
 }
 
 void UIFontImporter::GenerateBitmapFilename(){
@@ -295,13 +295,13 @@ void UIFontImporter::GenerateBitmapFilename(){
     mBitMapSaveName.ReplaceAll(' ', '_');
 }
 
-DataNode UIFontImporter::OnShowFontPicker(DataArray*){ return DataNode(0); }
-DataNode UIFontImporter::OnGenerate(DataArray*){ return DataNode(0); }
-DataNode UIFontImporter::OnGenerateOG(DataArray*){ return DataNode(0); }
+DataNode UIFontImporter::OnShowFontPicker(DataArray*){ return 0; }
+DataNode UIFontImporter::OnGenerate(DataArray*){ return 0; }
+DataNode UIFontImporter::OnGenerateOG(DataArray*){ return 0; }
 
 DataNode UIFontImporter::OnForgetGened(DataArray* da){
     mGennedFonts.clear();
-    return DataNode(0);
+    return 0;
 }
 
 void UIFontImporter::ImportSettingsFromFont(RndFont* font){
@@ -311,14 +311,14 @@ void UIFontImporter::ImportSettingsFromFont(RndFont* font){
         if(font->Type() == imported_font) has_import_font = true;
     }
     if(has_import_font){
-        SetProperty("font_name", DataNode(font->Property("font_name", true)->Str(0)));
-        SetProperty("font_size", DataNode(fabs720(-font->Property("font_size", true)->Int(0)))); 
-        SetProperty("bold", DataNode(font->Property("bold", true)->Int(0)));
-        SetProperty("italics", DataNode(font->Property("italics", true)->Int(0)));
-        SetProperty("left", DataNode(font->Property("left", true)->Int(0)));
-        SetProperty("right", DataNode(font->Property("right", true)->Int(0)));
-        SetProperty("top", DataNode(font->Property("top", true)->Int(0)));
-        SetProperty("bottom", DataNode(font->Property("bottom", true)->Int(0)));
+        SetProperty("font_name", font->Property("font_name", true)->Str(0));
+        SetProperty("font_size", fabs720(-font->Property("font_size", true)->Int(0))); 
+        SetProperty("bold", font->Property("bold", true)->Int(0));
+        SetProperty("italics", font->Property("italics", true)->Int(0));
+        SetProperty("left", font->Property("left", true)->Int(0));
+        SetProperty("right", font->Property("right", true)->Int(0));
+        SetProperty("top", font->Property("top", true)->Int(0));
+        SetProperty("bottom", font->Property("bottom", true)->Int(0));
     }
     else MILO_WARN("Can't import settings from Font because it doesnt have import_font type");
 }

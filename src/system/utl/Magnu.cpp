@@ -20,19 +20,19 @@ static DataNode MagnuRefreshStrings(DataArray* arr){
 
     if(yeet){
         TheLocale.SetMagnuStrings(yeet);
-        return DataNode(yeet->Size());
+        return yeet->Size();
     }
-    else return DataNode(0);
+    else return 0;
 }
 
 static DataNode AddToken(DataArray* arr){
     MILO_WARN("Magnu add token only supported on PC");
-    return DataNode(1);
+    return 1;
 }
 
 static DataNode EditToken(DataArray* arr){
     MILO_WARN("Magnu edit token only supported on PC");
-    return DataNode(1);
+    return 1;
 }
 
 void MagnuInit(){

@@ -404,7 +404,7 @@ DataNode UILabel::OnSetTokenFmt(const DataArray* da){
             SetTokenFmtImp(da->ForceSym(2), 0, da, 3, false);
         }
     }
-    return DataNode(1);
+    return 1;
 }
 
 void UILabel::SetTokenFmtImp(Symbol s, const DataArray* da1, const DataArray* da2, int i, bool b){
@@ -438,7 +438,7 @@ DataNode UILabel::OnSetInt(const DataArray* da){
     bool b = false;
     if(da->Size() > 3) b = da->Int(3);
     SetInt(i, b);
-    return DataNode(1);
+    return 1;
 }
 
 void UILabel::CenterWithLabel(UILabel* label, bool b, float f){
@@ -483,9 +483,9 @@ float GetPctHeightFromTextSize(float f){
 DataNode UILabel::OnGetMaterialVariations(const DataArray* da){
     int count = mLabelDir->NumMatVariations();
     DataArray* arr = new DataArray(count + 1);
-    arr->Node(0) = DataNode(Symbol());
+    arr->Node(0) = Symbol();
     for(int i = 1; i <= count; i++){
-        arr->Node(i) = DataNode(mLabelDir->GetMatVariationName(i - 1));
+        arr->Node(i) = mLabelDir->GetMatVariationName(i - 1);
     }
     DataNode ret = DataNode(arr, kDataArray);
     arr->Release();
@@ -497,9 +497,9 @@ DataNode UILabel::OnGetAltMaterialVariations(const DataArray* da){
         UILabelDir* labeldir = dynamic_cast<UILabelDir*>(mObjDirPtr.Ptr());
         int count = labeldir->NumMatVariations();
         DataArray* arr = new DataArray(count + 1);
-        arr->Node(0) = DataNode(Symbol());
+        arr->Node(0) = Symbol();
         for(int i = 1; i <= count; i++){
-            arr->Node(i) = DataNode(labeldir->GetMatVariationName(i - 1));
+            arr->Node(i) = labeldir->GetMatVariationName(i - 1);
         }
         DataNode ret = DataNode(arr, kDataArray);
         arr->Release();
@@ -507,7 +507,7 @@ DataNode UILabel::OnGetAltMaterialVariations(const DataArray* da){
     }
     else {
         DataArray* arr = new DataArray(1);
-        arr->Node(0) = DataNode(Symbol());
+        arr->Node(0) = Symbol();
         DataNode ret = DataNode(arr, kDataArray);
         arr->Release();
         return ret;

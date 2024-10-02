@@ -5,19 +5,19 @@
 #include "utl/TempoMap.h"
 
 static DataNode OnSecondsToBeat(DataArray* msg){
-    return DataNode(TheBeatMap->Beat(TheTempoMap->TimeToTick(msg->Float(1) * 1000.0f)));
+    return TheBeatMap->Beat(TheTempoMap->TimeToTick(msg->Float(1) * 1000.0f));
 }
 
 static DataNode OnBeatToSeconds(DataArray* msg){
-    return DataNode(TheTempoMap->TickToTime(TheBeatMap->BeatToTick(msg->Float(1))) / 1000.0f);
+    return TheTempoMap->TickToTime(TheBeatMap->BeatToTick(msg->Float(1))) / 1000.0f;
 }
 
 static DataNode OnBeatToMs(DataArray* msg){
-    return DataNode(TheTempoMap->TickToTime(TheBeatMap->BeatToTick(msg->Float(1))));
+    return TheTempoMap->TickToTime(TheBeatMap->BeatToTick(msg->Float(1)));
 }
 
 static DataNode OnMsToTick(DataArray* msg){
-    return DataNode(TheTempoMap->TimeToTick(msg->Float(1)));
+    return TheTempoMap->TimeToTick(msg->Float(1));
 }
 
 void TimeConversionInit(){

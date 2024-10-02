@@ -215,20 +215,20 @@ void LightPresetManager::StompPresets(LightPreset* presetA, LightPreset* presetB
 
 DataNode LightPresetManager::OnToggleLightingEvents(DataArray* da){
     mIgnoreLightingEvents = mIgnoreLightingEvents == 0;
-    return DataNode(mIgnoreLightingEvents);
+    return mIgnoreLightingEvents;
 }
 
 DataNode LightPresetManager::OnForcePreset(DataArray* da){
     LightPreset* p = da->Obj<LightPreset>(2);
     ForcePreset(p, da->Size() > 2 ? da->Float(3) : 0);
-    return DataNode(0);
+    return 0;
 }
 
 DataNode LightPresetManager::OnForceTwoPresets(DataArray* da){
     LightPreset* p1 = da->Obj<LightPreset>(2);
     LightPreset* p2 = da->Obj<LightPreset>(3);
     ForcePresets(p1, p2, da->Size() > 3 ? da->Float(4) : 0);
-    return DataNode(0);
+    return 0;
 }
 
 void LightPresetManager::SelectPreset(LightPreset* p, bool b){

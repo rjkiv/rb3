@@ -270,5 +270,5 @@ DataNode UIPanel::OnLoad(DataArray* da){
             MILO_ASSERT(bLoaded, 0x1D1);
         }
     }
-    return DataNode(0);
+    return 0;
 }
