@@ -8,6 +8,7 @@
 #include "world/Dir.h"
 #include "math/Interp.h"
 #include "math/MathFuncs.h"
+#include <float.h>
 #include "utl/Symbols.h"
 #include "utl/Messages.h"
 
@@ -532,7 +533,7 @@ CamShotFrame::CamShotFrame(Hmx::Object* o) : mDuration(0), mBlend(0), mBlendEase
     SetFieldOfView(1.2217305f);
     unk10.Reset();
     mScreenOffset.Zero();
-    unk34.x = 1e+30f;
+    unk34.x = FLT_MAX;
 }
 
 CamShotFrame::CamShotFrame(Hmx::Object* o, const CamShotFrame& frame) : mDuration(frame.mDuration), mBlend(frame.mBlend), mBlendEase(frame.mBlendEase),

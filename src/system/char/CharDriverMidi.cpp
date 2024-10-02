@@ -5,6 +5,7 @@
 #include "char/CharClipDriver.h"
 #include "utl/TimeConversion.h"
 #include "obj/Task.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 INIT_REVS(CharDriverMidi)
@@ -123,7 +124,7 @@ DataNode CharDriverMidi::OnMidiParserGroup(DataArray* da){
                     somefloat *= clip->AverageBeatsPerSecond();
                 }
                 MaxEq(somefloat, 0.0f);
-                Play(clip, 0, -somefloat, 1e+30f, 0.0f)->mBlendWidth = somefloat * mBlendOverridePct;
+                Play(clip, 0, -somefloat, FLT_MAX, 0.0f)->mBlendWidth = somefloat * mBlendOverridePct;
             }
             return DataNode(0);
         }

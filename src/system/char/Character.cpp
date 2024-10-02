@@ -10,6 +10,7 @@
 #include "char/CharInterest.h"
 #include "char/CharServoBone.h"
 #include "char/CharEyes.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 INIT_REVS(Character)
@@ -437,7 +438,7 @@ DataNode Character::OnPlayClip(DataArray* msg){
     if(mDriver){
         int playint = msg->Size() > 3 ? msg->Int(3) : 4;
         MILO_ASSERT(msg->Size()<=4, 0x58B);
-        return DataNode(mDriver->Play(msg->Node(2), playint, -1.0f, 1e+30f, 0.0f) != 0);
+        return DataNode(mDriver->Play(msg->Node(2), playint, -1.0f, FLT_MAX, 0.0f) != 0);
     }
     else return DataNode(0);
 }

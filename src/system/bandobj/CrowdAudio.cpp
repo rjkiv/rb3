@@ -2,6 +2,7 @@
 #include "obj/Task.h"
 #include "synth/Sequence.h"
 #include "obj/MsgSource.h"
+#include <float.h>
 #include "utl/Symbols.h"
 #include "utl/Messages.h"
 
@@ -13,7 +14,7 @@ void CrowdAudio::Init() { Register(); }
 
 CrowdAudio::CrowdAudio() : mCurrentMogg(0, 0), mOldMogg(0, 0), mFadingMogg(0, 0), mMainFader(Hmx::Object::New<Fader>()), mWantDuck(0), mResultsDuck(0),
     mResultsFadeDuration(1000.0f), mResultsFader(Hmx::Object::New<Fader>()), mFadeInFromLoadingDuration(1000.0f), mEntryFader(Hmx::Object::New<Fader>()), mVenueChangeFadeDuration(1000.0f), mLevel(kExcitementBad),
-    mLoopChangeTime(1e+30f), mIntro(0), mVenueIntro(0), mLevels(0), mVenueOutro(0), mState(0), mCrowdVol(0), mCamShotVol(0), mEnabled(1), mCrowdReacts(1), mLastClapBeat(0), mClapAllowed(1),
+    mLoopChangeTime(FLT_MAX), mIntro(0), mVenueIntro(0), mLevels(0), mVenueOutro(0), mState(0), mCrowdVol(0), mCamShotVol(0), mEnabled(1), mCrowdReacts(1), mLastClapBeat(0), mClapAllowed(1),
     mBank(0, 0), mCurrentBankFader(0), mOtherBankFader(0), mReleaseFader(Hmx::Object::New<Fader>()), mCrossfadeDuration(1000.0f), mReleaseTime(5000.0f), mPaused(0),
     mShouldPlayVenueIntro(0), mShouldPlayVenueOutro(0), mWon(0), mRestarting(1), mCloseupFader(Hmx::Object::New<Fader>()), mCloseupFadeDuration(1000.0f) {
     mOverrideExcitementLevel = (ExcitementLevel)-1;
@@ -46,7 +47,7 @@ void CrowdAudio::Enter(){
     RndPollable::Enter();
     mState = 0;
     mWon = false;
-    mLoopChangeTime = 1e+30f;
+    mLoopChangeTime = FLT_MAX;
     mLastClapBeat = 0;
     mWantDuck = HandleType(want_outro_duck_msg).Int(0);
     SetEnabled(true);
@@ -133,7 +134,7 @@ void CrowdAudio::SetExcitement(ExcitementLevel level){
 }
 
 bool CrowdAudio::PlayExcitementLoop(){
-    mLoopChangeTime = 1e+30f;
+    mLoopChangeTime = FLT_MAX;
     return PlayLoop(mLevels->Array(mLevel + 1), false);
 }
 

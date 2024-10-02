@@ -3,6 +3,7 @@
 #include "rndobj/Group.h"
 #include "bandobj/CrowdAudio.h"
 #include "world/Dir.h"
+#include <float.h>
 #include "utl/Symbols.h"
 #include "utl/Messages.h"
 
@@ -57,7 +58,7 @@ void BandDirector::Terminate(){
 }
 
 BandDirector::BandDirector() : mPropAnim(this, 0), mMerger(this, 0), mCurWorld(this, 0), unk58(0), mWorldPostProc(this, 0), mCamPostProc(this, 0), mPostProcA(this, 0), mPostProcB(this, 0),
-    mPostProcBlend(0), mLightPresetCatBlend(0), mLightPresetInterpEnabled(1), mDisabled(0), mAsyncLoad(0), mCurShot(this, 0), mNextShot(this, 0), mIntroShot(this, 0), unke0(-1e+30f), mDisablePicking(0), unke5(1), unk108(-1.0f), mEndOfSongSec(0),
+    mPostProcBlend(0), mLightPresetCatBlend(0), mLightPresetInterpEnabled(1), mDisabled(0), mAsyncLoad(0), mCurShot(this, 0), mNextShot(this, 0), mIntroShot(this, 0), unke0(FLT_MIN), mDisablePicking(0), unke5(1), unk108(-1.0f), mEndOfSongSec(0),
     unk110(0), mSongPref(0) {
     static DataNode& banddirector = DataVariable("banddirector");
     banddirector = DataNode(this);
@@ -98,7 +99,7 @@ void BandDirector::Enter(){
     if(mMerger){
         mNumPlayersFailed = 0;
         mExcitement = 3;
-        unke0 = -1e+30f;
+        unke0 = FLT_MIN;
         mShotCategory = "";
         mWorldPostProc = GetWorld()->Find<RndPostProc>("world.pp", true);
         RndPostProc* profilm = GetWorld()->Find<RndPostProc>("ProFilm_a.pp", true);
@@ -116,7 +117,7 @@ void BandDirector::Enter(){
         mCurWorld = 0;
         if(mPropAnim){
             mPropAnim->StartAnim();
-            mPropAnim->SetFrame(-1e+30f, 1.0f);
+            mPropAnim->SetFrame(FLT_MIN, 1.0f);
         }
         EnterVenue();
         mDisablePicking = 0;
@@ -385,7 +386,7 @@ void BandDirector::PlayNextShot(){
                     if(b1) b2 = true;
                 }
                 if(b2) unke0 = TheTaskMgr.Seconds(TaskMgr::b) + 1.0f;
-                else unke0 = -1.0E+30f;
+                else unke0 = FLT_MIN;
             }
         }
         mCurShot = oldnextshot;
@@ -1240,7 +1241,7 @@ DataNode BandDirector::OnShotOver(DataArray* da){
         unk58 = true;
         unke0 = -1000.0f;
     }
-    else unke0 = -1e+30f;
+    else unke0 = FLT_MIN;
     return DataNode(0);
 }
 
@@ -1277,7 +1278,7 @@ float FindFrameWithLeadIn(){
 }
 
 void BandDirector::FindNextPstKeyframe(float f1, float f2, Symbol s){
-    unk108 = 1e+30f;
+    unk108 = FLT_MAX;
     float stb = SecondsToBeat(f2 / 30.0f);
     float beat = TheTaskMgr.Beat();
     if((stb - beat) + 1.1920929E-7f > 4.0f) unk108 = f2;
@@ -1476,7 +1477,7 @@ DataNode BandDirector::OnFirstShotOK(DataArray* da){
     Symbol s2 = da->Sym(2);
     if(strncmp(s2.mStr, "coop_", 5) != 0) return DataNode(0);
     else {
-        float f3c = 1e+30f;
+        float f3c = FLT_MAX;
         float f10 = mPropAnim->GetFrame();
         Symbol symshottouse = TheBandWardrobe->PlayShot5() ? shot_5 : TheBandWardrobe->GetPlayMode();
         if(symshottouse == coop_bg) symshottouse = shot_bg;
@@ -1505,10 +1506,10 @@ DataNode BandDirector::OnFirstShotOK(DataArray* da){
                     float fr = skeys[idxafter + 1].frame;
                     f3c = fr;
                 }
-                else f3c = 1e+30f;
+                else f3c = FLT_MAX;
             }
         }
-        if(f3c == 1e+30f) f3c = mEndOfSongSec * 30.0f;
+        if(f3c == FLT_MAX) f3c = mEndOfSongSec * 30.0f;
 
         int dircutidxafter = mDircuts.FindFirstAfter(TheTaskMgr.Seconds(TaskMgr::b));
         if(dircutidxafter < mDircuts.size() && mDircuts[dircutidxafter].value){

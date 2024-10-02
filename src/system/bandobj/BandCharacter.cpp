@@ -10,6 +10,7 @@
 #include "char/CharUtl.h"
 #include "math/Rand.h"
 #include "obj/Utl.h"
+#include <float.h>
 #include "utl/Symbols.h"
 #include "utl/Messages.h"
 
@@ -190,11 +191,11 @@ CharClipDriver* BandCharacter::PlayMainClip(int i, bool b){
                             CharDriver* drv = mDriver;
                             if(unk454 == drv) drv = mAddDriver;
                             CharClip* stillclip = drv->ClipDir()->Find<CharClip>("still", false);
-                            if(stillclip) drv->Play(stillclip, imask, -1.0f, 1e+30f, 0.0f);
+                            if(stillclip) drv->Play(stillclip, imask, -1.0f, FLT_MAX, 0.0f);
                             else MILO_NOTIFY_ONCE("%s could not find still clip", PathName(drv));
                         }
                     }
-                    CharClipDriver* played = unk454->Play(clp, mask, -1.0f, 1e+30f, 0.0f);
+                    CharClipDriver* played = unk454->Play(clp, mask, -1.0f, FLT_MAX, 0.0f);
                     if((mask & 0xF) == 2) mTeleported = true;
                     if(played){
                         MakeMRU(unk6c0, clp);
@@ -220,7 +221,7 @@ void BandCharacter::PlayFaceClip(){
         if(!grp){
             MILO_WARN("Could not find CharClipGroup %s in %s\n", mFaceGroupName, PathName(mDriver->ClipDir()));
         }
-        else mFaceDriver->Play(grp->GetClip(), 4, -1.0f, 1e+30f, 0.0f);
+        else mFaceDriver->Play(grp->GetClip(), 4, -1.0f, FLT_MAX, 0.0f);
     }
 }
 

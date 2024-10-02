@@ -5,9 +5,10 @@
 #include "char/CharClipGroup.h"
 #include "char/Char.h"
 #include "os/Debug.h"
+#include <float.h>
 
 CharDriver::CharDriver() : mBones(this, 0), mClips(this, 0), mFirst(0), mTestClip(this, 0), mDefaultClip(this, 0),
-    mDefaultPlayStarved(0), mStarvedHandler(), mLastNode(0), mOldBeat(1e+30f), mRealign(0), mBeatScale(1.0f), mBlendWidth(1.0f),
+    mDefaultPlayStarved(0), mStarvedHandler(), mLastNode(0), mOldBeat(FLT_MAX), mRealign(0), mBeatScale(1.0f), mBlendWidth(1.0f),
     mClipType(), mApply(kApplyBlend), mInternalBones(0), mPlayMultipleClips(0) {
 
 }
@@ -25,10 +26,10 @@ void CharDriver::Highlight(){
 void CharDriver::Enter(){
     Clear();
     mLastNode = DataNode(0);
-    mOldBeat = 1e+30f;
+    mOldBeat = FLT_MAX;
     mBeatScale = 1.0f;
     RndPollable::Enter();
-    if(mDefaultClip) Play(DataNode(mDefaultClip), 1, -1.0f, 1e+30f, 0.0f);
+    if(mDefaultClip) Play(DataNode(mDefaultClip), 1, -1.0f, FLT_MAX, 0.0f);
 }
 
 void CharDriver::Exit(){ RndPollable::Exit(); }

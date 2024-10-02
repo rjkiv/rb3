@@ -1,5 +1,6 @@
 #include "char/ClipGraphGen.h"
 #include "os/Debug.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 ClipGraphGenerator::ClipGraphGenerator() : unk1c(0), mDmap(0), mClipA(0), mClipB(0) {
@@ -47,7 +48,7 @@ DataNode ClipGraphGenerator::OnGenerateTransitions(DataArray* da){
     MILO_ASSERT(!mDmap, 0xC6);
     MILO_ASSERT(mClipA, 199);
     MILO_ASSERT(mClipB, 200);
-    float max_error = 1e+30f;
+    float max_error = FLT_MAX;
     da->FindData("max_error", max_error, false);
     float beat_align = 0;
     da->FindData("beat_align", beat_align, false);

@@ -1,5 +1,6 @@
 #include "ui/UIProxy.h"
 #include "obj/ObjVersion.h"
+#include <float.h>
 #include "utl/Messages.h"
 #include "utl/Symbols.h"
 
@@ -7,7 +8,7 @@ INIT_REVS(UIProxy)
 
 UIProxy::UIProxy() : mDir(), mEnv(this, 0), mMainTrans(0), mSyncOnMove(0), mPolled(0) {
     mOldXfm.Reset();
-    mOldXfm.v.x = -1.0E+30f;
+    mOldXfm.v.x = FLT_MIN;
 }
 
 // fn_805757B8
@@ -156,7 +157,7 @@ void UIProxy::UpdateDir(){
     if(mDir.Ptr()){
         mDir->Enter();
         mPolled = false;
-        mOldXfm.v.x = -1e+30f;
+        mOldXfm.v.x = FLT_MIN;
     }
 }
 

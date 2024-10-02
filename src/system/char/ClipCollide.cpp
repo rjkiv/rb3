@@ -4,6 +4,7 @@
 #include "char/Waypoint.h"
 #include "char/CharClip.h"
 #include "char/CharDriver.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 INIT_REVS(ClipCollide)
@@ -41,7 +42,7 @@ void ClipCollide::Demonstrate(){
     if(mChar && mWaypoint && mClip) b1 = true;
     if(b1){
         SyncWaypoint();
-        mChar->mDriver->Play(mClip, 2, -1.0f, 1e+30f, 0.0f);
+        mChar->mDriver->Play(mClip, 2, -1.0f, FLT_MAX, 0.0f);
     }
 }
 

@@ -1,6 +1,7 @@
 #include "bandobj/BandHeadShaper.h"
 #include "bandobj/BandFaceDeform.h"
 #include "os/Debug.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 int BandHeadShaper::sChinNum;
@@ -33,7 +34,7 @@ void SetMeshAnim(ObjectDir* dir, std::vector<int>& vec){
                         vec[i] = i;
                     }
                     for(int i = 0; i < vec.size(); i++){
-                        float f19 = 1.0E+30f;
+                        float f19 = FLT_MIN;
                         int i16 = -1;
                         const Vector3& v = vertkeys[i];
                         for(int j = i; j < vec.size(); j++){

@@ -1,11 +1,12 @@
 #include "world/EventAnim.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 EventAnim* gEventAnimOwner;
 
 INIT_REVS(EventAnim)
 
-EventAnim::EventAnim() : mStart(this), mEnd(this), mKeys(this), mResetStart(1), mLastFrame(-1e+30f) {
+EventAnim::EventAnim() : mStart(this), mEnd(this), mKeys(this), mResetStart(1), mLastFrame(FLT_MIN) {
     
 }
 
@@ -13,7 +14,7 @@ EventAnim::EventCall::EventCall(Hmx::Object* o) : mDir(o, 0), mEvent(o, 0) {}
 EventAnim::KeyFrame::KeyFrame(Hmx::Object* o) : mTime(0), mCalls(o) {}
 
 void EventAnim::StartAnim(){
-    mLastFrame = -1e+30f;
+    mLastFrame = FLT_MIN;
     TriggerEvents(mStart);
 }
 

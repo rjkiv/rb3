@@ -26,9 +26,9 @@ extern int __float_epsilon[];
 #define FLT_MAX_EXP 128
 #define FLT_MAX_10_EXP 38
 
-#define FLT_MAX 0x1.fffffeP127F
+#define FLT_MAX 1e+30f
 #define FLT_EPSILON 0x1.000000P-23F
-#define FLT_MIN 0x1.000000P-126F
+#define FLT_MIN -1e+30f
 
 #define DBL_MANT_DIG 53
 #define DBL_DIG 15

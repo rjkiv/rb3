@@ -7,6 +7,7 @@
 #include "midi/MidiParserMgr.h"
 #include "rndobj/Rnd.h"
 #include "midi/DisplayEvents.h"
+#include <float.h>
 #include "utl/Symbols.h"
 
 std::list<MidiParser*> MidiParser::sParsers;
@@ -66,7 +67,7 @@ MidiParser::PostProcess::PostProcess() : zeroLength(false), startOffset(0),
             maxGap(1e30), useRealtimeGaps(false), variableBlendPct(0) { }
 
 MidiParser::MidiParser() : mTrackName(), mGemParser(0), mNoteParser(0), mTextParser(0), mLyricParser(0), mCurParser(0),
-    mVocalEvents(0), mNotes(), mGems(0), mInverted(0), mLastStart(-1e+30f), mLastEnd(-1e+30f), mFirstEnd(-1e+30f),
+    mVocalEvents(0), mNotes(), mGems(0), mInverted(0), mLastStart(FLT_MIN), mLastEnd(FLT_MIN), mFirstEnd(FLT_MIN),
     mMessageType(), mAppendLength(false), mUseVariableBlending(false), mMessageSelf(false), mCompressed(false), mStart(0.0f), mBefore(0) {
     mEvents = new DataEventList();
     sParsers.push_back(this);
@@ -124,7 +125,7 @@ void MidiParser::SetTypeDef(DataArray* arr){
 
 void MidiParser::Clear() {
     mEvents->Clear();
-    mFirstEnd = -1e+30f;
+    mFirstEnd = FLT_MIN;
     mCurParser = 0;
     mVocalEvents = 0;
     mGems = 0;
@@ -396,7 +397,7 @@ DataNode MidiParser::OnInsertIdle(DataArray* arr){
     float sub = mStart - f5;
     if(sub - f4 >= f3){
         if(mUseVariableBlending){
-            float f10 = -1e+30f;
+            float f10 = FLT_MIN;
             if(mBefore >= 0){
                 f10 = mEvents->Event(mBefore).start;
             }
@@ -422,7 +423,7 @@ float MidiParser::ConvertToBeats(float f1, float f2){
 
 void MidiParser::FixGap(float* fp){
     if(mUseVariableBlending){
-        float f4 = -1e+30f;
+        float f4 = FLT_MIN;
         if(mBefore >= 0){
             f4 = mEvents->Event(mBefore).start;
         }
@@ -442,7 +443,7 @@ void MidiParser::FixGap(float* fp){
 DataNode MidiParser::OnNextStartDelta(DataArray* arr){
     int curidx = mEvents->CurIndex();
     float f;
-    if(curidx >= mEvents->Size()) f = 1e+30f;
+    if(curidx >= mEvents->Size()) f = FLT_MAX;
     else f = mEvents->Event(curidx).start;
     return DataNode(f - mEvent->start);
 }
