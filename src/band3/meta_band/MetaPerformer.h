@@ -10,6 +10,7 @@
 #include "meta_band/BandProfile.h"
 #include "meta_band/Instarank.h"
 #include "net_band/DataResults.h"
+#include "ui/UILabel.h"
 
 class PlayerScore;
 
@@ -91,6 +92,8 @@ public:
         bool friendMode; // 0x18
         BandStatsInfo stats; // 0x1c
         Symbol song; // 0x68
+    };
+    enum WiiPendingFlags {
     };
 
     MetaPerformer(const BandSongMgr &, const char *);
@@ -190,6 +193,34 @@ public:
     bool IsRandomSetList() const;
     void SkipSong();
     void AdvanceSong(int);
+    bool HasBattleHighscore();
+    bool HasHighscore();
+    int GetLastOfflineScore();
+    int GetLastOfflineSoloScore(BandUser *);
+    bool HasSoloHighscore(BandUser *);
+    bool HasValidBandScore();
+    bool HasValidUserScore(BandUser *);
+    bool HasValidInstarankData() const;
+    void UpdateInstarankRankLabel(UILabel *);
+    void UpdateInstarankHighscore1Label(UILabel *);
+    void UpdateInstarankHighscore2Label(UILabel *);
+    void UpdateBattleInstarankHighscore1Label(UILabel *);
+    void UpdateBattleInstarankHighscore2Label(UILabel *);
+    const char *GetSoloScoreTypeIcon(BandUser *);
+    void UpdateSoloInstarankRankLabel(BandUser *, UILabel *);
+    void UpdateSoloInstarankHighscore1Label(BandUser *, UILabel *);
+    void UpdateSoloInstarankHighscore2Label(BandUser *, UILabel *);
+    void UploadDebugStats();
+    void ClearCreditsPending();
+    bool AreCreditsPending() const;
+    void SetWiiPending(WiiPendingFlags);
+    void ClearWiiPending(WiiPendingFlags);
+    bool IsWiiPending(WiiPendingFlags) const;
+    short GetRecentInstrumentMask() const;
+    bool CheatToggleFinale();
+    Symbol GetSongSymbol(int idx) const { return mSongs[idx]; }
+    int GetWinMetric() const { return 0; }
+    int GetPersistentGameData() { return 0; }
 
     DataNode OnMsg(const RockCentralOpCompleteMsg &);
     DataNode OnMsg(const ModeChangedMsg &);
@@ -198,7 +229,7 @@ public:
     static MetaPerformer *Current();
     static MetaPerformer *sMetaPerformer;
 
-    bool unk38;
+    unsigned char unk38;
     QuickplayPerformerImpl *mQpPerformer; // 0x3c
     bool unk40;
     Symbol mVenue; // 0x44
@@ -214,7 +245,7 @@ public:
     std::vector<Symbol> mSongs; // 0x70
     std::vector<int> unk78;
     BandSongMgr *mSongMgr; // 0x80
-    Instarank unk84;
+    Instarank unk84; // 0x84 - battle instarank?
     Instarank unkdc;
     Instarank unk134[4]; // 0x134
     int unk294;

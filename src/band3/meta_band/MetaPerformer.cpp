@@ -13,6 +13,7 @@
 #include "meta_band/BandSongMgr.h"
 #include "meta_band/Campaign.h"
 #include "meta_band/Instarank.h"
+#include "meta_band/OvershellPanel.h"
 #include "meta_band/SongSortMgr.h"
 #include "meta_band/SongStatusMgr.h"
 #include "meta_band/Utl.h"
@@ -29,13 +30,19 @@
 #include "meta_band/BandSongMetadata.h"
 #include "meta_band/ModifierMgr.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
+#include "obj/Msg.h"
+#include "obj/ObjMacros.h"
 #include "os/Debug.h"
 #include "os/System.h"
+#include "rndobj/Rnd.h"
+#include "synth/MicManagerInterface.h"
 #include "synth/Synth.h"
 #include "tour/Tour.h"
 #include "ui/UILabel.h"
 #include "utl/DataPointMgr.h"
 #include "utl/Loader.h"
+#include "utl/PoolAlloc.h"
 #include "utl/Symbol.h"
 #include "utl/Symbols.h"
 #include "utl/Symbols2.h"
@@ -43,6 +50,7 @@
 #include "utl/Symbols4.h"
 
 MetaPerformer *MetaPerformer::sMetaPerformer;
+MicClientID sNullMicClientID;
 
 PerformerStatsInfo::PerformerStatsInfo()
     : mInstrumentMask(0), mScoreType(kScoreBand), unkc(-1), unk10(-1),
@@ -1331,3 +1339,400 @@ void MetaPerformer::PotentiallyUpdateLeaderboards(
         SaveAndUploadScores(filteredUsers, s3, info);
     }
 }
+
+int MetaPerformer::TotalStars(bool b1) const {
+    int stars = 0;
+    FOREACH (it, unk78) {
+        if (b1) {
+            stars += Min(5, *it);
+        } else
+            stars += *it;
+    }
+    return stars;
+}
+
+bool MetaPerformer::HasBattleHighscore() { return unk84.HasHighscore(); }
+
+bool MetaPerformer::HasHighscore() {
+    if (unk2bc) {
+        return unkdc.HasHighscore();
+    } else {
+        BandProfile *profile = TheProfileMgr.GetPrimaryProfile();
+        if (profile) {
+            return profile->GetSongHighScore(unk294, kScoreBand) > unk298;
+        } else
+            return false;
+    }
+}
+
+int MetaPerformer::GetLastOfflineScore() { return unk298; }
+
+int MetaPerformer::GetLastOfflineSoloScore(BandUser *user) {
+    if (user->IsLocal()) {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x878);
+        return unk29c[localUser->GetSlot()];
+    } else
+        return 0;
+}
+
+bool MetaPerformer::HasSoloHighscore(BandUser *user) {
+    if (!user->IsLocal())
+        return false;
+    else {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x88A);
+        if (localUser->GetPlayer() && !localUser->GetPlayer()->GetQuarantined()) {
+            BandProfile *profile = TheProfileMgr.GetProfileForUser(localUser);
+            if (profile) {
+                int padnum = localUser->GetPadNum();
+                int slot = localUser->GetSlot();
+                Server *netServer = TheNet.GetServer();
+                MILO_ASSERT(netServer, 0x895);
+                int pID = netServer->GetPlayerID(padnum);
+                if (unk2bc && pID) {
+                    Instarank &rank = GetInstarankForPlayerID(slot);
+                    if (rank.mIsValid) {
+                        return rank.HasHighscore();
+                    }
+                }
+                int highscore = profile->GetSongHighScore(unk294, unk2ac[slot]);
+                return highscore > unk29c[slot];
+            }
+        }
+    }
+    return false;
+}
+
+bool MetaPerformer::HasValidBandScore() { return unk2c8.stats.mSoloStats.size() > 0; }
+
+bool MetaPerformer::HasValidUserScore(BandUser *user) {
+    if (user->IsLocal()) {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x8B4);
+        BandProfile *profile = TheProfileMgr.GetProfileForUser(localUser);
+        if (profile) {
+            int numStats = unk2c8.stats.mSoloStats.size();
+            for (int i = 0; i < numStats; i++) {
+                if (unk2c8.stats.GetSoloProfile(i) == profile)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool MetaPerformer::HasValidInstarankData() const { return unkdc.mIsValid; }
+
+void MetaPerformer::UpdateInstarankRankLabel(UILabel *label) {
+    MILO_ASSERT(label, 0x8D0);
+    if (unkdc.mIsValid) {
+        unkdc.UpdateRankLabel(label);
+    } else {
+        MILO_WARN(
+            "can't update instarank label %s - mBandInstarank is uninitialized!\n",
+            label->Name()
+        );
+    }
+}
+
+void MetaPerformer::UpdateInstarankHighscore1Label(UILabel *label) {
+    MILO_ASSERT(label, 0x8DE);
+    if (unkdc.mIsValid) {
+        unkdc.UpdateString1Label(label);
+    } else {
+        MILO_WARN(
+            "can't update string1 label %s - mBandInstarank is uninitialized!\n",
+            label->Name()
+        );
+    }
+}
+
+void MetaPerformer::UpdateInstarankHighscore2Label(UILabel *label) {
+    MILO_ASSERT(label, 0x8EC);
+    if (unkdc.mIsValid) {
+        unkdc.UpdateString2Label(label);
+    } else {
+        MILO_WARN(
+            "can't update string2 label %s - mBandInstarank is uninitialized!\n",
+            label->Name()
+        );
+    }
+}
+
+void MetaPerformer::UpdateBattleInstarankHighscore1Label(UILabel *label) {
+    MILO_ASSERT(label, 0x8FA);
+    if (unk84.mIsValid) {
+        unk84.UpdateString1Label(label);
+    } else {
+        MILO_WARN(
+            "can't update HighScore1 label %s - mBattleInstarank is uninitialized!\n",
+            label->Name()
+        );
+    }
+}
+
+void MetaPerformer::UpdateBattleInstarankHighscore2Label(UILabel *label) {
+    MILO_ASSERT(label, 0x908);
+    if (unk84.mIsValid) {
+        unk84.UpdateString2Label(label);
+    } else {
+        MILO_WARN(
+            "can't update HighScore2 label %s - mBattleInstarank is uninitialized!\n",
+            label->Name()
+        );
+    }
+}
+
+const char *MetaPerformer::GetSoloScoreTypeIcon(BandUser *user) {
+    if (user->IsLocal()) {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x919);
+        int padnum = localUser->GetPadNum();
+        int slot = localUser->GetSlot();
+        Server *netServer = TheNet.GetServer();
+        MILO_ASSERT(netServer, 0x91E);
+        int pID = netServer->GetPlayerID(padnum);
+        ScoreType s;
+        if (unk2bc && pID) {
+            Instarank &rank = GetInstarankForPlayerID(slot);
+            if (rank.mIsValid)
+                s = rank.mScoreType;
+            else
+                s = unk2ac[slot];
+        } else
+            s = unk2ac[slot];
+        return GetFontCharFromScoreType(s, 0);
+    } else
+        return "j";
+}
+
+void MetaPerformer::UpdateSoloInstarankRankLabel(BandUser *user, UILabel *label) {
+    MILO_ASSERT(label, 0x93B);
+    MILO_ASSERT(user, 0x93C);
+    if (!user->IsLocal()) {
+        label->SetTextToken(gNullStr);
+    } else {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x946);
+        if (!localUser->GetPlayer() || localUser->GetPlayer()->GetQuarantined()) {
+            label->SetTextToken(gNullStr);
+        } else if (!TheProfileMgr.GetProfileForUser(localUser)) {
+            label->SetTextToken(gNullStr);
+        } else {
+            int padnum = localUser->GetPadNum();
+            int slot = localUser->GetSlot();
+            Server *netServer = TheNet.GetServer();
+            MILO_ASSERT(netServer, 0x95B);
+            if (!netServer->GetPlayerID(padnum)) {
+                label->SetTextToken(gNullStr);
+            } else {
+                Instarank &rank = GetInstarankForPlayerID(slot);
+                if (rank.mIsValid) {
+                    rank.UpdateRankLabel(label);
+                }
+            }
+        }
+    }
+}
+
+void MetaPerformer::UpdateSoloInstarankHighscore1Label(BandUser *user, UILabel *label) {
+    MILO_ASSERT(label, 0x96D);
+    MILO_ASSERT(user, 0x96E);
+    if (!user->IsLocal()) {
+        label->SetTextToken(gNullStr);
+    } else {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x978);
+        if (!localUser->GetPlayer() || localUser->GetPlayer()->GetQuarantined()) {
+            label->SetTextToken(gNullStr);
+        } else if (!TheProfileMgr.GetProfileForUser(localUser)) {
+            label->SetTextToken(gNullStr);
+        } else {
+            int padnum = localUser->GetPadNum();
+            int slot = localUser->GetSlot();
+            Server *netServer = TheNet.GetServer();
+            MILO_ASSERT(netServer, 0x98D);
+            if (!netServer->GetPlayerID(padnum)) {
+                label->SetTextToken(gNullStr);
+            } else {
+                Instarank &rank = GetInstarankForPlayerID(slot);
+                if (rank.mIsValid) {
+                    rank.UpdateString1Label(label);
+                }
+            }
+        }
+    }
+}
+
+void MetaPerformer::UpdateSoloInstarankHighscore2Label(BandUser *user, UILabel *label) {
+    MILO_ASSERT(label, 0x99F);
+    MILO_ASSERT(user, 0x9A0);
+    if (!user->IsLocal()) {
+        label->SetTextToken(gNullStr);
+    } else {
+        LocalBandUser *localUser = dynamic_cast<LocalBandUser *>(user);
+        MILO_ASSERT(localUser, 0x9AA);
+        if (!localUser->GetPlayer() || localUser->GetPlayer()->GetQuarantined()) {
+            label->SetTextToken(gNullStr);
+        } else if (!TheProfileMgr.GetProfileForUser(localUser)) {
+            label->SetTextToken(gNullStr);
+        } else {
+            int padnum = localUser->GetPadNum();
+            int slot = localUser->GetSlot();
+            Server *netServer = TheNet.GetServer();
+            MILO_ASSERT(netServer, 0x9BF);
+            if (!netServer->GetPlayerID(padnum)) {
+                label->SetTextToken(gNullStr);
+            } else {
+                Instarank &rank = GetInstarankForPlayerID(slot);
+                if (rank.mIsValid) {
+                    rank.UpdateString2Label(label);
+                }
+            }
+        }
+    }
+}
+
+void MetaPerformer::UploadDebugStats() {
+    TheRnd->UploadDebugStats();
+    Symbol::UploadDebugStats();
+    ChunkAllocator::UploadDebugStats();
+}
+
+void MetaPerformer::SetCreditsPending() {
+    static OvershellPanel *pOvershellPanel =
+        ObjectDir::Main()->Find<OvershellPanel>("overshell", true);
+    pOvershellPanel->UpdateAll();
+    unk40 = true;
+}
+
+void MetaPerformer::ClearCreditsPending() {
+    static OvershellPanel *pOvershellPanel =
+        ObjectDir::Main()->Find<OvershellPanel>("overshell", true);
+    pOvershellPanel->UpdateAll();
+    unk40 = false;
+}
+
+bool MetaPerformer::AreCreditsPending() const { return unk40; }
+void MetaPerformer::SetWiiPending(WiiPendingFlags flags) { unk38 |= flags; }
+void MetaPerformer::ClearWiiPending(WiiPendingFlags flags) { unk38 &= ~flags; }
+bool MetaPerformer::IsWiiPending(WiiPendingFlags flags) const { return unk38 & flags; }
+void MetaPerformer::SetCheating(bool b) { unk334 = b; }
+short MetaPerformer::GetRecentInstrumentMask() const { return 0x400; }
+bool MetaPerformer::CheatToggleFinale() { return unk2c5 = !unk2c5; }
+
+#pragma push
+#pragma dont_inline on
+BEGIN_HANDLERS(MetaPerformer)
+    HANDLE_EXPR(current, Current())
+    HANDLE_ACTION(set_venue, SetVenue(_msg->ForceSym(2)))
+    HANDLE_ACTION(load_festival, LoadFestival())
+    HANDLE_EXPR(festival_reward, unk2c4)
+    HANDLE_ACTION(select_random_venue, SelectRandomVenue())
+    HANDLE_EXPR(get_venue, GetVenue())
+    HANDLE_EXPR(get_venue_class, GetVenueClass())
+    HANDLE_EXPR(get_last_venue_class, GetLastVenueClass())
+    HANDLE_ACTION(clear_venues, ClearVenues())
+    HANDLE_EXPR(has_setlist, HasSetlist())
+    HANDLE_ACTION(set_song, SetSong(_msg->Sym(2)))
+    HANDLE_ACTION(set_songs, SetSongs(_msg->Array(2)))
+    HANDLE_ACTION(reset_songs, ResetSongs())
+    HANDLE_ACTION(restart, Restart())
+    HANDLE_ACTION(host_restart_last_song, HostRestartLastSong())
+    HANDLE_EXPR(num_songs, NumSongs())
+    HANDLE_EXPR(num_completed, NumCompleted())
+    HANDLE_EXPR(song, Song())
+    HANDLE_EXPR(song_id, SongsID())
+    HANDLE_EXPR(indexed_song, GetSongSymbol(_msg->Int(2)))
+    HANDLE_EXPR(win_metric, GetWinMetric())
+    HANDLE_EXPR(get_completed_song, GetCompletedSong())
+    HANDLE_EXPR(is_first_song, IsFirstSong())
+    HANDLE_EXPR(is_last_song, IsLastSong())
+    HANDLE_EXPR(is_set_complete, IsSetComplete())
+    HANDLE_EXPR(part_plays_in_set, PartPlaysInSet(_msg->Sym(2)))
+    HANDLE_EXPR(part_plays_in_song, PartPlaysInSong(_msg->Sym(2)))
+    HANDLE_EXPR(is_winning, IsWinning())
+    HANDLE_EXPR(has_sync_permission, HasSyncPermission())
+    HANDLE_EXPR(cheat_toggle_finale, CheatToggleFinale())
+    HANDLE_ACTION(trigger_song_completion, TriggerSongCompletion())
+    HANDLE_ACTION(advance_song, AdvanceSong(_msg->Int(2)))
+    HANDLE_ACTION(skip_song, SkipSong())
+    HANDLE_EXPR(is_no_fail_active, IsNoFailActive())
+    HANDLE_EXPR(is_band_no_fail_set, IsBandNoFailSet())
+    HANDLE_ACTION(set_band_no_fail, SetBandNoFail(_msg->Int(2)))
+    HANDLE_ACTION(set_harmony_override, unk35c = _msg->Int(2))
+    HANDLE_ACTION(set_realdrums_override, unk35d = _msg->Int(2))
+    HANDLE_EXPR(get_venue_override, GetVenueOverride())
+    HANDLE_ACTION(set_venue_override, mVenueOverride = _msg->Sym(2))
+    HANDLE_EXPR(is_now_using_vocal_harmony, IsNowUsingVocalHarmony())
+    HANDLE_EXPR(is_playing_demo, IsPlayingDemo())
+    HANDLE_EXPR(are_credits_pending, AreCreditsPending())
+    HANDLE_ACTION(set_credits_pending, SetCreditsPending())
+    HANDLE_ACTION(clear_credits_pending, ClearCreditsPending())
+    HANDLE_EXPR(is_wiiprofile_create_pending, IsWiiPending((WiiPendingFlags)1))
+    HANDLE_ACTION(set_wiiprofile_create_pending, SetWiiPending((WiiPendingFlags)1))
+    HANDLE_ACTION(clear_wiiprofile_create_pending, ClearWiiPending((WiiPendingFlags)1))
+    HANDLE_EXPR(is_using_persistent_data, GetPersistentGameData() != 0)
+    HANDLE_EXPR(total_stars, TotalStars(_msg->Int(2)))
+    HANDLE_EXPR(get_total_stars_capped, TotalStars(true))
+    HANDLE_EXPR(get_recent_instrument_mask, GetRecentInstrumentMask())
+    HANDLE_ACTION(upload_debug_stats, UploadDebugStats())
+    HANDLE_EXPR(has_online_scoring, unk2bc)
+    HANDLE_EXPR(has_valid_band_score, HasValidBandScore())
+    HANDLE_EXPR(has_valid_user_score, HasValidUserScore(_msg->Obj<BandUser>(2)))
+    HANDLE_EXPR(has_online_scoring, unk2bc)
+    HANDLE_EXPR(has_valid_instarank_data, HasValidInstarankData())
+    HANDLE_ACTION(
+        update_instarank_rank_label, UpdateInstarankRankLabel(_msg->Obj<UILabel>(2))
+    )
+    HANDLE_ACTION(
+        update_instarank_highscore_1_label,
+        UpdateInstarankHighscore1Label(_msg->Obj<UILabel>(2))
+    )
+    HANDLE_ACTION(
+        update_instarank_highscore_2_label,
+        UpdateInstarankHighscore2Label(_msg->Obj<UILabel>(2))
+    )
+    HANDLE_EXPR(has_highscore, HasHighscore())
+    HANDLE_EXPR(get_last_offline_score, GetLastOfflineScore())
+    HANDLE_EXPR(get_solo_score_type_icon, GetSoloScoreTypeIcon(_msg->Obj<BandUser>(2)))
+    HANDLE_ACTION(
+        update_instarank_solo_rank_label,
+        UpdateSoloInstarankRankLabel(_msg->Obj<BandUser>(2), _msg->Obj<UILabel>(3))
+    )
+    HANDLE_ACTION(
+        update_instarank_solo_highscore_1_label,
+        UpdateSoloInstarankHighscore1Label(_msg->Obj<BandUser>(2), _msg->Obj<UILabel>(3))
+    )
+    HANDLE_ACTION(
+        update_instarank_solo_highscore_2_label,
+        UpdateSoloInstarankHighscore2Label(_msg->Obj<BandUser>(2), _msg->Obj<UILabel>(3))
+    )
+    HANDLE_EXPR(has_solo_highscore, HasSoloHighscore(_msg->Obj<BandUser>(2)))
+    HANDLE_EXPR(
+        get_last_offline_solo_score, GetLastOfflineSoloScore(_msg->Obj<BandUser>(2))
+    )
+    HANDLE_ACTION(
+        update_battle_instarank_highscore_1_label,
+        UpdateBattleInstarankHighscore1Label(_msg->Obj<UILabel>(2))
+    )
+    HANDLE_ACTION(
+        update_battle_instarank_highscore_2_label,
+        UpdateBattleInstarankHighscore2Label(_msg->Obj<UILabel>(2))
+    )
+    HANDLE_EXPR(has_battle_highscore, HasBattleHighscore())
+    HANDLE_EXPR(has_valid_battle_instarank_data, HasValidBattleInstarank())
+    HANDLE_EXPR(has_battle, HasBattle())
+    HANDLE_EXPR(get_battle_name, GetBattleName())
+    HANDLE_EXPR(get_battle_instrument_mask, GetBattleInstrumentMask())
+    HANDLE_EXPR(get_battle_score, GetBattleScore())
+    HANDLE_ACTION(update_battle_type_label, UpdateBattleTypeLabel(_msg->Obj<UILabel>(2)))
+    HANDLE_ACTION(set_cheating, SetCheating(_msg->Int(2)))
+    HANDLE_MESSAGE(RockCentralOpCompleteMsg)
+    HANDLE_MESSAGE(ModeChangedMsg)
+    HANDLE_MEMBER_PTR(CurrentImpl())
+    HANDLE_SUPERCLASS(MsgSource)
+    HANDLE_CHECK(0xADB)
+END_HANDLERS
+#pragma pop
