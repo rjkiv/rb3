@@ -2,11 +2,16 @@
 #include "game/BandUser.h"
 #include "game/Defines.h"
 #include "game/GameMic.h"
+#include "game/UISyncNetMsgs.h"
+#include "meta_band/BandMachine.h"
 #include "meta_band/CharData.h"
 #include "meta_band/Matchmaker.h"
 #include "meta_band/OvershellSlotState.h"
 #include "net/Server.h"
 #include "obj/ObjMacros.h"
+#include "os/JoypadMsgs.h"
+#include "os/PlatformMgr.h"
+#include "ui/UIComponent.h"
 #include "ui/UIPanel.h"
 #include "net/Synchronize.h"
 #include "obj/Msg.h"
@@ -102,6 +107,10 @@ public:
     bool SongOptionsRequired() const { return mSongOptionsRequired; }
 
     DataNode SlotHandle(OvershellSlot *, const Message &);
+    DataNode ExportButtonMsg(const Message &, BandUser *, bool);
+    DataNode ExportToUser(const Message &, User *, UIComponent *);
+    DataNode SlotHandle(PanelDir *, const Message &);
+
     DataNode OnMsg(const SessionReadyMsg &);
     DataNode OnMsg(const SessionDisconnectedMsg &);
     DataNode OnMsg(const JoypadConnectionMsg &);
@@ -110,6 +119,24 @@ public:
     DataNode OnMsg(const ServerStatusChangedMsg &);
     DataNode OnMsg(const ConnectionStatusChangedMsg &);
     DataNode OnMsg(const NetStartUtilityFinishedMsg &);
+    DataNode OnMsg(const ButtonDownMsg &);
+    DataNode OnMsg(const ButtonUpMsg &);
+    DataNode OnMsg(const UIComponentScrollMsg &);
+    DataNode OnMsg(const UIComponentSelectMsg &);
+    DataNode OnMsg(const UIComponentSelectDoneMsg &);
+    DataNode OnMsg(const UIComponentFocusChangeMsg &);
+    DataNode OnMsg(const UITransitionCompleteMsg &);
+    DataNode OnMsg(const NetComponentSelectMsg &);
+    DataNode OnMsg(const NetComponentScrollMsg &);
+    DataNode OnMsg(const RemoteUserLeftMsg &);
+    DataNode OnMsg(const RemoteMachineUpdatedMsg &);
+    DataNode OnMsg(const RemoteUserUpdatedMsg &);
+    DataNode OnMsg(const NewRemoteUserMsg &);
+    DataNode OnMsg(const SigninChangedMsg &);
+    DataNode OnMsg(const PartyMembersChangedMsg &);
+    DataNode OnMsg(const InviteReceivedMsg &);
+    DataNode OnMsg(const InviteExpiredMsg &);
+    DataNode OnMsg(const UserNameNewlyProfaneMsg &);
 
     NEW_OBJ(OvershellPanel);
     static void Init();

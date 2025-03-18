@@ -1,6 +1,7 @@
 #include "meta_band/OvershellPanel.h"
 #include "OvershellPanel.h"
 #include "OvershellSlot.h"
+#include "bandobj/OvershellDir.h"
 #include "beatmatch/TrackType.h"
 #include "decomp.h"
 #include "game/BandUser.h"
@@ -12,21 +13,27 @@
 #include "meta/WiiProfileMgr.h"
 #include "meta_band/BandUI.h"
 #include "meta_band/ClosetMgr.h"
+#include "meta_band/InputMgr.h"
 #include "meta_band/Matchmaker.h"
 #include "meta_band/ModifierMgr.h"
 #include "meta_band/OvershellSlot.h"
 #include "meta_band/OvershellSlotState.h"
 #include "meta_band/ProfileMgr.h"
 #include "meta_band/SessionMgr.h"
+#include "meta_band/UIEventMgr.h"
 #include "net/NetSession.h"
 #include "net/Server.h"
 #include "net/WiiFriendMgr.h"
 #include "net_band/RockCentral.h"
+#include "obj/Data.h"
 #include "obj/Dir.h"
 #include "os/Debug.h"
 #include "os/Joypad_Wii.h"
 #include "os/PlatformMgr.h"
+#include "os/VirtualKeyboard.h"
+#include "rndobj/Rnd.h"
 #include "synth/MicManagerInterface.h"
+#include "ui/UIComponent.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbols.h"
 #include "utl/Symbols3.h"
@@ -879,3 +886,158 @@ bool OvershellPanel::ShouldSeeRealGuitarPrompt(
     }
 }
 #pragma pop
+
+void OvershellPanel::FinishLoad() {
+    UIPanel::FinishLoad();
+    DataArray *playerPanelsArr = TypeDef()->FindArray("player_panels", true);
+    DataArray *typeArr = playerPanelsArr->FindArray("type", true);
+    DataArray *slots = playerPanelsArr->FindArray("slots", false);
+    MILO_ASSERT(slots, 0x72F);
+    DataArray *validControllers = slots->FindArray("valid_controllers", true);
+    MILO_ASSERT(validControllers, 0x731);
+    DataArray *normalArr = validControllers->FindArray("normal", true);
+    DataArray *voxArr = validControllers->FindArray("auto_vocals", true);
+    int size = normalArr->Size() - 1;
+    DataArray *priorityArr = slots->FindArray("joining_priority", true);
+    ClearSlots();
+    mSlots.reserve(size);
+    for (int i = 0; i < size; i++) {
+        const char *slotName = MakeString("slot%i", i);
+        OvershellDir *p = LoadedDir()->Find<OvershellDir>(slotName, true);
+        MILO_ASSERT(p, 0x740);
+        OvershellSlot *slot = new OvershellSlot(i, this, p, mBandUserMgr, mSessionMgr);
+        slot->SetTypeDef(typeArr);
+        DataArray *normalArrNext = normalArr->Array(i + 1);
+        for (int j = 0; j < normalArrNext->Size(); j++) {
+            slot->AddValidController(SymToControllerType(normalArrNext->Sym(j)));
+        }
+        DataArray *autoVoxArrNext = voxArr->Array(i + 1);
+        for (int j = 0; j < autoVoxArrNext->Size(); j++) {
+            slot->AddValidController(SymToControllerType(autoVoxArrNext->Sym(j)));
+        }
+        AddSlot(slot, priorityArr->Int(i + 1));
+    }
+    UpdateAll();
+}
+
+void OvershellPanel::Enter() {
+    for (int i = 0; i < mSlots.size(); i++) {
+        mSlots[i]->Enter();
+    }
+    TheNetSession->AddSink(this, RemoteUserUpdatedMsg::Type());
+    TheInputMgr->SetInvalidMessageSink(this);
+    UIPanel::Enter();
+    UpdateAll();
+}
+
+void OvershellPanel::Exit() {
+    TheInputMgr->ClearInvalidMessageSink();
+    TheNetSession->RemoveSink(this, RemoteUserUpdatedMsg::Type());
+    UIPanel::Exit();
+}
+
+bool OvershellPanel::Exiting() const {
+    if (UIPanel::Exiting())
+        return true;
+    else {
+        bool ret = false;
+        for (int i = 0; i < mSlots.size(); i++) {
+            if (mSlots[i]->GetPanelDir()->Exiting()) {
+                ret = true;
+                break;
+            }
+        }
+        return ret;
+    }
+}
+
+void OvershellPanel::Poll() {
+    unk4cc = mPanelOverrideFlow;
+    if (TheRnd->mProcCmds & kProcessPost) {
+        if (unk4c8) {
+            MILO_ASSERT(InOverrideFlow(kOverrideFlow_RegisterOnline), 0x794);
+        }
+    }
+}
+
+void OvershellPanel::SyncSave(BinStream &bs, unsigned int) const {
+    bs << (unsigned char)mPanelOverrideFlow;
+    bs << unk4b8;
+    bs << mSongOptionsRequired;
+}
+
+void OvershellPanel::SyncLoad(BinStream &bs, unsigned int) {
+    unsigned char flow;
+    bs >> flow;
+    mPanelOverrideFlow = (OvershellOverrideFlow)flow;
+    bs >> unk4b8;
+    bs >> mSongOptionsRequired;
+}
+
+bool OvershellPanel::HasSyncPermission() const { return mSessionMgr->IsLeaderLocal(); }
+void OvershellPanel::OnSynchronized(unsigned int) { UpdateAll(); }
+
+DataNode OvershellPanel::OnMsg(const ButtonDownMsg &msg) {
+    if (ThePlatformMgr.mHomeMenuWii->mHomeMenuActive
+        || TheVirtualKeyboard.IsKeyboardShowing()) {
+        return DataNode(kDataUnhandled, 0);
+    } else {
+        BandUser *pUser = BandUserMgr::GetBandUser(msg.GetUser());
+        MILO_ASSERT(pUser->IsLocal(), 0x80C);
+        if (TheUIEventMgr->HasActiveDialogEvent()) {
+            return DataNode(kDataUnhandled, 0);
+        } else
+            return ExportButtonMsg(msg, pUser, true);
+    }
+}
+
+DataNode OvershellPanel::OnMsg(const ButtonUpMsg &msg) {
+    if (ThePlatformMgr.mHomeMenuWii->mHomeMenuActive
+        || TheVirtualKeyboard.IsKeyboardShowing()) {
+        return DataNode(kDataUnhandled, 0);
+    } else {
+        BandUser *pUser = BandUserMgr::GetBandUser(msg.GetUser());
+        MILO_ASSERT(pUser->IsLocal(), 0x81E);
+        if (TheUIEventMgr->HasActiveDialogEvent()) {
+            return DataNode(kDataUnhandled, 0);
+        } else
+            return ExportButtonMsg(msg, pUser, false);
+    }
+}
+
+DataNode OvershellPanel::OnMsg(const UIComponentScrollMsg &msg) {
+    if (TheUIEventMgr->HasActiveDialogEvent())
+        return DataNode(kDataUnhandled, 0);
+    else {
+        return ExportToUser(msg, msg.GetUser(), msg.GetUIComponent());
+    }
+}
+
+DataNode OvershellPanel::OnMsg(const UIComponentSelectMsg &msg) {
+    if (TheUIEventMgr->HasActiveDialogEvent())
+        return DataNode(kDataUnhandled, 0);
+    else {
+        return ExportToUser(msg, msg.GetUser(), msg.GetComponent());
+    }
+}
+
+DataNode OvershellPanel::OnMsg(const UIComponentSelectDoneMsg &msg) {
+    if (TheUIEventMgr->HasActiveDialogEvent())
+        return DataNode(kDataUnhandled, 0);
+    else {
+        return ExportToUser(msg, msg.GetUser(), msg.GetComponent());
+    }
+}
+
+DataNode OvershellPanel::OnMsg(const UIComponentFocusChangeMsg &msg) {
+    if (TheUIEventMgr->HasActiveDialogEvent())
+        return DataNode(kDataUnhandled, 0);
+    else {
+        return SlotHandle(msg.GetDir(), msg);
+    }
+}
+
+DataNode OvershellPanel::OnMsg(const UITransitionCompleteMsg &) {
+    UpdateAll();
+    return DataNode(kDataUnhandled, 0);
+}
