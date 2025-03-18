@@ -10,7 +10,11 @@
 #include "game/GameMic.h"
 #include "game/GameMicManager.h"
 #include "game/GameMode.h"
+#include "game/UISyncNetMsgs.h"
+#include "meta/ConnectionStatusPanel.h"
+#include "meta/Profile.h"
 #include "meta/WiiProfileMgr.h"
+#include "meta_band/BandMachine.h"
 #include "meta_band/BandUI.h"
 #include "meta_band/ClosetMgr.h"
 #include "meta_band/InputMgr.h"
@@ -27,7 +31,9 @@
 #include "net_band/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/ObjMacros.h"
 #include "os/Debug.h"
+#include "os/JoypadMsgs.h"
 #include "os/Joypad_Wii.h"
 #include "os/PlatformMgr.h"
 #include "os/VirtualKeyboard.h"
@@ -36,6 +42,7 @@
 #include "ui/UIComponent.h"
 #include "ui/UIList.h"
 #include "ui/UIPanel.h"
+#include "ui/UIScreen.h"
 #include "ui/UISlider.h"
 #include "utl/Locale.h"
 #include "utl/Symbols.h"
@@ -1315,3 +1322,75 @@ DataNode OvershellPanel::OnMsg(const SessionBusyMsg &) {
     UpdateAll();
     return 1;
 }
+
+#pragma push
+#pragma dont_inline on
+BEGIN_HANDLERS(OvershellPanel)
+    HANDLE_MESSAGE(ButtonDownMsg)
+    HANDLE_MESSAGE(ButtonUpMsg)
+    HANDLE_MESSAGE(UIComponentScrollMsg)
+    HANDLE_MESSAGE(UIComponentSelectMsg)
+    HANDLE_MESSAGE(UIComponentSelectDoneMsg)
+    HANDLE_MESSAGE(UIComponentFocusChangeMsg)
+    HANDLE_MESSAGE(UITransitionCompleteMsg)
+    HANDLE_MESSAGE(RemoteUserLeftMsg)
+    HANDLE_MESSAGE(RemoteUserUpdatedMsg)
+    HANDLE_MESSAGE(NewRemoteUserMsg)
+    HANDLE_MESSAGE(RemoteMachineUpdatedMsg)
+    HANDLE_MESSAGE(NetComponentSelectMsg)
+    HANDLE_MESSAGE(NetComponentScrollMsg)
+    HANDLE_MESSAGE(SigninChangedMsg)
+    HANDLE_MESSAGE(JoypadConnectionMsg)
+    HANDLE_MESSAGE(GameMicsChangedMsg)
+    HANDLE_MESSAGE(MatchmakerChangedMsg)
+    HANDLE_MESSAGE(ServerStatusChangedMsg)
+    HANDLE_MESSAGE(ConnectionStatusChangedMsg)
+    HANDLE_MESSAGE(NetStartUtilityFinishedMsg)
+    HANDLE_MESSAGE(PartyMembersChangedMsg)
+    HANDLE_MESSAGE(InviteReceivedMsg)
+    HANDLE_MESSAGE(InviteExpiredMsg)
+    HANDLE_MESSAGE(UserNameNewlyProfaneMsg)
+    HANDLE_MESSAGE(NetStartUtilityFinishedMsg)
+    HANDLE(export_all, OnExportAll)
+    HANDLE_ACTION(update_all, UpdateAll())
+    HANDLE(update, OnUpdate)
+    HANDLE_EXPR(get_panel_from_slot_num, GetSlot(_msg->Int(2)))
+    HANDLE_EXPR(get_slot, GetSlot(_msg->Obj<BandUser>(2)))
+    HANDLE_ACTION(set_active_status, SetActiveStatus((OvershellActiveStatus)_msg->Int(2)))
+    HANDLE_ACTION(
+        begin_override_flow, BeginOverrideFlow((OvershellOverrideFlow)_msg->Int(2))
+    )
+    HANDLE_ACTION(
+        end_override_flow,
+        EndOverrideFlow((OvershellOverrideFlow)_msg->Int(2), _msg->Int(3))
+    )
+    HANDLE_EXPR(in_override_flow, InOverrideFlow((OvershellOverrideFlow)_msg->Int(2)))
+    HANDLE_ACTION(set_block_all_input, SetBlockAllInput(_msg->Int(2)))
+    HANDLE_EXPR(all_slots_ready_to_play, AllSlotsReadyToPlay())
+    HANDLE_EXPR(should_pause, ShouldPause())
+    HANDLE_ACTION(attempt_to_add_user, AttemptToAddUser(_msg->Obj<LocalBandUser>(2)))
+    HANDLE_EXPR(is_any_slot_allowing_input_to_shell, IsAnySlotAllowingInputToShell())
+    HANDLE_EXPR(get_first_user_allowing_input_to_shell, GetFirstUserAllowingInputToShell())
+    HANDLE_EXPR(
+        is_any_local_slot_allowing_input_to_shell, IsAnyLocalSlotAllowingInputToShell()
+    )
+    HANDLE_EXPR(is_any_slot_joinable, IsAnySlotJoinable())
+    HANDLE_EXPR(is_non_vocalist_in_vocals_slot, IsNonVocalistInVocalsSlot())
+    HANDLE_ACTION(set_allow_real_guitar_flow, unk4bc = _msg->Int(2))
+    HANDLE_ACTION(enable_auto_vocals, EnableAutoVocals())
+    HANDLE_ACTION(remove_users_requiring_song_options, RemoveUsersRequiringSongOptions())
+    HANDLE_ACTION(set_song_options_required, SetSongOptionsRequired(_msg->Int(2)))
+    HANDLE_ACTION(set_autohide, SetAutohide(_msg->Int(2)))
+    HANDLE_ACTION(set_use_extended_mic_arrows, SetUseExtendedMicArrows(_msg->Int(2)))
+    HANDLE_ACTION(set_allows_button_pulse, SetAllowsButtonPulse(_msg->Int(2)))
+    HANDLE_ACTION(leave_options, LeaveOptions())
+    HANDLE_EXPR(is_full, IsFull())
+    HANDLE_MESSAGE(SessionBusyMsg)
+    HANDLE_MESSAGE(SessionReadyMsg)
+    HANDLE_MESSAGE(SessionDisconnectedMsg)
+    HANDLE(add_sink, OnAddSink)
+    HANDLE(remove_sink, OnRemoveSink)
+    HANDLE_SUPERCLASS(UIPanel)
+    HANDLE_CHECK(0xACC)
+END_HANDLERS
+#pragma pop
