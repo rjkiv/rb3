@@ -34,8 +34,12 @@
 #include "rndobj/Rnd.h"
 #include "synth/MicManagerInterface.h"
 #include "ui/UIComponent.h"
+#include "ui/UIList.h"
 #include "ui/UIPanel.h"
+#include "ui/UISlider.h"
+#include "utl/Locale.h"
 #include "utl/Symbols.h"
+#include "utl/Symbols2.h"
 #include "utl/Symbols3.h"
 #include "utl/Symbols4.h"
 
@@ -364,7 +368,9 @@ bool OvershellPanel::IsFull() const {
     return true;
 }
 
+FORCE_LOCAL_INLINE
 bool OvershellPanel::InSong() const { return mActiveStatus == kOvershellInSong; }
+END_FORCE_LOCAL_INLINE
 
 OvershellSlot *OvershellPanel::GetSlot(int slot) {
     FOREACH (it, mSlots) {
@@ -1040,4 +1046,272 @@ DataNode OvershellPanel::OnMsg(const UIComponentFocusChangeMsg &msg) {
 DataNode OvershellPanel::OnMsg(const UITransitionCompleteMsg &) {
     UpdateAll();
     return DataNode(kDataUnhandled, 0);
+}
+
+DataNode OvershellPanel::OnMsg(const NetComponentSelectMsg &msg) {
+    User *u = msg.GetUser();
+    MILO_ASSERT(u, 0x854);
+    FOREACH (it, mSlots) {
+        OvershellSlot *pSlot = *it;
+        MILO_ASSERT(pSlot, 0x859);
+        if (pSlot->GetUser() == u) {
+            UIComponent *c = pSlot->GetPanelDir()->FindComponent(msg.GetStr());
+            if (c) {
+                c->MockSelect();
+                return 1;
+            }
+        }
+    }
+    return DataNode(kDataUnhandled, 0);
+}
+
+DataNode OvershellPanel::OnMsg(const NetComponentScrollMsg &msg) {
+    User *u = msg.GetUser();
+    MILO_ASSERT(u, 0x86F);
+    FOREACH (it, mSlots) {
+        OvershellSlot *pSlot = *it;
+        MILO_ASSERT(pSlot, 0x874);
+        if (pSlot->GetUser() == u) {
+            UIComponent *c = pSlot->GetPanelDir()->FindComponent(msg.GetStr());
+            UIList *l = dynamic_cast<UIList *>(c);
+            if (l) {
+                l->SetSelected(msg.GetSelectedPos(), msg.GetFirstShowing());
+            } else {
+                UISlider *s = dynamic_cast<UISlider *>(c);
+                s->SetCurrent(msg.GetSelectedPos());
+            }
+            return 1;
+        }
+    }
+    return DataNode(kDataUnhandled, 0);
+}
+
+DataNode OvershellPanel::OnMsg(const RemoteUserLeftMsg &msg) {
+    MILO_ASSERT(IsLoaded(), 0x892);
+    BandUser *user = BandUserMgr::GetBandUser(msg.GetUser());
+    mBandUserMgr->SetSlot(user, -1);
+    UpdateAll();
+    return DataNode(kDataUnhandled, 0);
+}
+
+DataNode OvershellPanel::OnMsg(const RemoteMachineUpdatedMsg &msg) {
+    if (msg.GetMask() & 1) {
+        MILO_ASSERT(IsLoaded(), 0x8A6);
+        UpdateAll();
+    }
+    return 1;
+}
+
+DataNode OvershellPanel::OnMsg(const RemoteUserUpdatedMsg &) {
+    MILO_ASSERT(IsLoaded(), 0x8AE);
+    UpdateAll();
+    return 1;
+}
+
+DataNode OvershellPanel::OnMsg(const NewRemoteUserMsg &msg) {
+    MILO_ASSERT(IsLoaded(), 0x8B5);
+    RemoteBandUser *user = BandUserMgr::GetRemoteBandUser(msg.GetUser());
+    OvershellSlot *slot = FindSlotForRemoteUser(user);
+    MILO_ASSERT(slot, 0x8BA);
+    mBandUserMgr->SetSlot(user, slot->GetSlotNum());
+    UpdateAll();
+    return 1;
+}
+
+DECOMP_FORCEACTIVE(OvershellPanel, "pSlotCur")
+
+DataNode OvershellPanel::OnMsg(const SigninChangedMsg &) {
+    UpdateAll();
+    return 1;
+}
+
+DataNode OvershellPanel::OnMsg(const PartyMembersChangedMsg &) {
+    UpdateAll();
+    return 1;
+}
+
+DataNode OvershellPanel::OnMsg(const InviteReceivedMsg &) {
+    UpdateAll();
+    return 1;
+}
+
+DataNode OvershellPanel::OnMsg(const InviteExpiredMsg &) {
+    UpdateAll();
+    return 1;
+}
+
+DataNode OvershellPanel::OnMsg(const UserNameNewlyProfaneMsg &msg) {
+    int idx = msg->Int(2);
+    if (TheWiiProfileMgr.IsIndexRegistered(idx)) {
+        const char *fmt = Localize(wiiprofile_create_error_newly_profane, nullptr);
+        const char *name = TheWiiProfileMgr.GetNameForIndex(idx);
+        TheWiiProfileMgr.SetIndexRegistered(idx, false);
+        char buf[0x100];
+        snprintf(buf, 0x100, fmt, name);
+        Message msg("show_net_error", buf);
+        TheBandUI.Handle(msg, true);
+        RemoveUsersWithoutOnlinePrivilege();
+        UpdateAll();
+    }
+    return 1;
+}
+
+DataNode OvershellPanel::OnUpdate(DataArray *arr) {
+    DataNode &n = arr->Node(2).Evaluate();
+    Update(n.Obj<OvershellSlot>());
+    return 1;
+}
+
+void OvershellPanel::Update(OvershellSlot *slot) {
+    if (slot)
+        slot->Update();
+}
+
+DataNode OvershellPanel::OnExportAll(DataArray *arr) {
+    DataNode &n = arr->Node(2);
+    if (n.Type() == kDataSymbol) {
+        Message msg(n.Sym());
+        ExportAll(msg);
+    } else {
+        ExportAll(Message(arr->Array(2)));
+    }
+    return 1;
+}
+
+DataNode OvershellPanel::ExportButtonMsg(const Message &msg, BandUser *user, bool b3) {
+    MILO_ASSERT(!mSlots.empty(), 0x95D);
+    DataNode n28;
+    if (!user) {
+        return DataNode(kDataUnhandled, 0);
+    }
+    OvershellSlot *slot = FindSlotForUser(user);
+    int i5 = msg->Int(4);
+    if (slot) {
+        UIComponent *c = slot->GetPanelDir()->FocusComponent();
+        if (c && c->GetState() == UIComponent::kSelecting) {
+            return n28;
+        }
+        if (slot->GetState()->AllowsInputToShell() && i5 != 4
+            && mActiveStatus == kOvershellInSong) {
+            return DataNode(kDataUnhandled, 0);
+        }
+        n28 = SlotHandle(slot, msg);
+    } else if (b3) {
+        static Message noSlotButtonDownMsg("no_slot_button_down_msg", 0);
+        noSlotButtonDownMsg[0] = i5;
+        HandleType(noSlotButtonDownMsg);
+    }
+    return n28;
+}
+
+OvershellSlot *OvershellPanel::FindSlotForUser(BandUser *user) {
+    FOREACH (it, mSlots) {
+        OvershellSlot *pSlotCur = *it;
+        MILO_ASSERT(pSlotCur, 0x999);
+        if (pSlotCur->GetUser() == user)
+            return pSlotCur;
+    }
+    FOREACH (it, mSlots) {
+        OvershellSlot *pSlotCur = *it;
+        MILO_ASSERT(pSlotCur, 0x9A5);
+        if (pSlotCur->IsValidUser(user))
+            return pSlotCur;
+    }
+    return nullptr;
+}
+
+OvershellSlot *OvershellPanel::FindSlotForRemoteUser(RemoteBandUser *user) {
+    std::vector<OvershellSlot *> slots;
+    for (int i = 0; i < mSlots.size(); i++) {
+        if (!mSlots[i]->GetUser()) {
+            slots.push_back(mSlots[i]);
+        }
+    }
+    ControllerType c = user->GetControllerType();
+    for (int i = 0; i < slots.size(); i++) {
+        if (slots[i]->IsValidControllerType(c)) {
+            return slots[i];
+        }
+    }
+    return nullptr;
+}
+
+void OvershellPanel::LeaveOptions() {
+    for (int i = 0; i < mSlots.size(); i++) {
+        BandUser *user = mSlots[i]->GetUser();
+        if (user && user->IsLocal()) {
+            mSlots[i]->LeaveOptions();
+        }
+    }
+}
+
+void OvershellPanel::CheckForControllerDisconnects() {
+    if (!DataVariable(fake_controllers).Int()) {
+        LocalBandUser *localUser;
+        for (int i = 0; i < mSlots.size(); i++) {
+            BandUser *user = mSlots[i]->GetUser();
+            OvershellSlotStateID id = mSlots[i]->GetState()->GetStateID();
+            if (user && user->IsLocal() && user->IsParticipating()) {
+                localUser = user->GetLocalBandUser();
+                if (localUser->ConnectedControllerType() != user->GetControllerType()
+                    && mActiveStatus != kOvershellInactive) {
+                    bool b2 = (TheUIEventMgr && TheUIEventMgr->HasDialogEvent(pad_lost));
+                    bool removeOnDisconnect =
+                        TheGameMode->Property("remove_user_on_disconnect_in_song")->Int();
+                    if (InSong() && !removeOnDisconnect) {
+                        if (mSlots[i]->GetState()->GetStateID() != 0x32) {
+                            mSlots[i]->SetOverrideFlowReturnState(id);
+                            mSlots[i]->ShowState((OvershellSlotStateID)0x32);
+                        }
+                    } else if (!mSlots[i]->GetState()->IsRemoveUserPrompt() && !b2) {
+                        mSlots[i]->AttemptRemoveUser();
+                    } else if (!b2 && TheUIEventMgr) {
+                        static Message pad_lost_init("init", localUser);
+                        pad_lost_init[0] = localUser;
+                        TheUIEventMgr->TriggerEvent(pad_lost, pad_lost_init);
+                        mSlots[i]->LeaveOptions();
+                    }
+                }
+            }
+        }
+    }
+}
+
+DataNode
+OvershellPanel::ExportToUser(const Message &msg, User *u, UIComponent *required) {
+    if (u) {
+        FOREACH (it, mSlots) {
+            OvershellSlot *pSlot = *it;
+            MILO_ASSERT(pSlot, 0xA31);
+            BandUser *user = pSlot->GetUser();
+            if (user == u) {
+                MILO_ASSERT(required, 0xA38);
+                if (pSlot->GetPanelDir()->FindComponent(required->Name()) == required) {
+                    SlotHandle(pSlot, msg);
+                    return 1;
+                }
+            }
+        }
+    }
+    return DataNode(kDataUnhandled, 0);
+}
+
+DataNode OvershellPanel::SlotHandle(PanelDir *dir, const Message &msg) {
+    FOREACH (it, mSlots) {
+        OvershellSlot *pSlot = *it;
+        MILO_ASSERT(pSlot, 0xA4A);
+        if (pSlot->GetPanelDir() == dir)
+            return SlotHandle(pSlot, msg);
+    }
+    return DataNode(kDataUnhandled, 0);
+}
+
+DataNode OvershellPanel::SlotHandle(OvershellSlot *pSlot, const Message &msg) {
+    MILO_ASSERT(pSlot, 0xA57);
+    return pSlot->Handle(msg, false);
+}
+
+DataNode OvershellPanel::OnMsg(const SessionBusyMsg &) {
+    UpdateAll();
+    return 1;
 }

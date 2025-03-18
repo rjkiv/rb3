@@ -166,6 +166,7 @@ public:
     void AddAutoVocalsValidController(ControllerType);
     void ToggleWiiSpeak();
     void AddUser(LocalBandUser *);
+    bool IsValidUser(BandUser *) const;
     Hmx::Object *GetUserWiiProfile(); // TODO: change the return type once this is
                                       // implemented
 

@@ -7,6 +7,7 @@
 #include "meta_band/CharData.h"
 #include "meta_band/Matchmaker.h"
 #include "meta_band/OvershellSlotState.h"
+#include "meta_band/SessionMgr.h"
 #include "net/Server.h"
 #include "obj/ObjMacros.h"
 #include "os/JoypadMsgs.h"
@@ -73,6 +74,7 @@ public:
     void AddSlot(OvershellSlot *, int);
     bool IsFull() const;
     OvershellSlot *GetSlot(BandUser *);
+    OvershellSlot *FindSlotForRemoteUser(RemoteBandUser *);
     BandUser *GetPartRestrictedUser() const;
     TrackType GetPartRestriction() const;
     Difficulty GetMinimumDifficulty() const;
@@ -99,6 +101,8 @@ public:
     void SetPartRestriction(TrackType);
     void SetMinimumDifficulty(Difficulty);
     void ClearTrackTypesFromUsers();
+    void Update(OvershellSlot *);
+    void LeaveOptions();
 
     bool InGame() const {
         return mActiveStatus == kOvershellInGameShell
@@ -110,6 +114,8 @@ public:
     DataNode ExportButtonMsg(const Message &, BandUser *, bool);
     DataNode ExportToUser(const Message &, User *, UIComponent *);
     DataNode SlotHandle(PanelDir *, const Message &);
+    DataNode OnUpdate(DataArray *);
+    DataNode OnExportAll(DataArray *);
 
     DataNode OnMsg(const SessionReadyMsg &);
     DataNode OnMsg(const SessionDisconnectedMsg &);
@@ -137,6 +143,7 @@ public:
     DataNode OnMsg(const InviteReceivedMsg &);
     DataNode OnMsg(const InviteExpiredMsg &);
     DataNode OnMsg(const UserNameNewlyProfaneMsg &);
+    DataNode OnMsg(const SessionBusyMsg &);
 
     NEW_OBJ(OvershellPanel);
     static void Init();
