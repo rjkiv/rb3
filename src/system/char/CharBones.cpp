@@ -107,19 +107,27 @@ void CharBones::ListBones(std::list<Bone> &bones) const {
 void CharBones::Zero() { memset(mStart, 0, mTotalSize); }
 
 int CharBones::TypeSize(int i) const {
-    if(i > 1U){
-        if(i != 2){
-            if(mCompression != kCompressNone) return 2;
-            else return 4;
-        }
-        else {
-            if(mCompression >= kCompressQuats) return 4;
-            else if(mCompression != kCompressNone) return 8;
-            else return 16;
-        }
+    switch (i) {
+    case TYPE_POS:
+    case TYPE_SCALE:
+        if (mCompression >= kCompressVects)
+            return 6;
+        else
+            return 12;
+    case TYPE_QUAT:
+        if (mCompression >= kCompressQuats)
+            return 4;
+        else if (mCompression != kCompressNone)
+            return 8;
+        else
+            return 16;
+
+    default:
+        if (mCompression != kCompressNone)
+            return 2;
+        else
+            return 4;
     }
-    else if(mCompression >= kCompressVects) return 6;
-    else return 12;
 }
 
 int CharBones::FindOffset(Symbol s) const {
@@ -157,7 +165,7 @@ void CharBones::RecomputeSizes() {
         int diff = mCounts[i + 1] - mCounts[i];
         mOffsets[i + 1] = mOffsets[i] + diff * TypeSize(i);
     }
-    mTotalSize = mEndOffset + 0xFU & 0xFFFFFFF0;
+    mTotalSize = mEndOffset + 0xFU & 0xFFFFFFF0; // round up to the nearest 0x10, alignment moment
 }
 
 void CharBones::SetCompression(CompressionType ty) {
