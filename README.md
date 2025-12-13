@@ -12,6 +12,8 @@ A decompilation of Rock Band 3 (Build 100901_A).
 
 This repository does **not** contain any game assets or assembly whatsoever. An existing copy of the game is required.
 
+i use arch btw
+
 Dependencies
 ============
 
